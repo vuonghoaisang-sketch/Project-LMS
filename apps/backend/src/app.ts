@@ -1,18 +1,21 @@
 import express from "express";
 import cors from "cors";
 
+import authRoute from "./routes/auth.route";
+import testRoute from "./routes/test.route";
+
 const app = express();
 
-// Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  }),
+);
 
 app.use(express.json());
 
-// Test API
-app.get("/", (req, res) => {
-  res.json({
-    message: "LMS Backend API is running 🚀",
-  });
-});
+app.use("/api/auth", authRoute);
+
+app.use("/api", testRoute);
 
 export default app;

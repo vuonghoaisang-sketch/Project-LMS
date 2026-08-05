@@ -11,18 +11,20 @@ export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const result = await login({
         email,
         password,
       });
-      console.log('Login Success:', result);
+      console.log(result);
+      localStorage.setItem('token', result.token);
+      alert('Login success');
     } catch (error) {
-      console.error('Login Failed:', error);
+      console.error(error);
     }
-  }
+  };
 
   return (
     <AuthCard>
