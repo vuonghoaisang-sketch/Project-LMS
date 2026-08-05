@@ -36,3 +36,13 @@ export async function findUserByEmail(email: string) {
 
   return (rows as any[])[0];
 }
+export async function findUserById(id: number) {
+  const [rows] = await db.query(
+    "SELECT id,name,email,role FROM users WHERE id=?",
+    [id],
+  );
+
+  const users = rows as any[];
+
+  return users[0];
+}

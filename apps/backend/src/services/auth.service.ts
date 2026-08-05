@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import { createUser } from "../models/user.model";
 import jwt from "jsonwebtoken";
-import { findUserByEmail } from "../models/user.model";
-import { JWT_SECRET } from "../config/jwt";
+import { findUserByEmail, findUserById } from "../models/user.model";
+import { JWT_SECRET } from "../utils/jwt";
 
 interface RegisterData {
   name: string;
@@ -54,5 +54,19 @@ export async function loginUser(email: string, password: string) {
       email: user.email,
       role: user.role,
     },
+  };
+}
+export async function getUserById(id: number) {
+  const user = await findUserById(id);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
   };
 }
