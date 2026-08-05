@@ -27,6 +27,8 @@ export default function LoginForm() {
       // lưu JWT
       localStorage.setItem('token', result.token);
 
+      localStorage.setItem('user', JSON.stringify(result.user));
+
       // chuyển sang dashboard
       router.push('/');
     } catch (error) {
@@ -52,7 +54,6 @@ export default function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-
         <Button type="submit">Login</Button>
       </form>
     </AuthCard>
