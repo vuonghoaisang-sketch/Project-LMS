@@ -1,11 +1,11 @@
-import Header from './Header';
-import Sidebar from './Sidebar';
+import Header from '@/components/layout/Header';
+import Sidebar from '@/components/layout/Sidebar';
 
-type MainLayoutProps = {
+export default function DashboardLayout({
+  children,
+}: {
   children: React.ReactNode;
-};
-
-export default function MainLayout({ children }: MainLayoutProps) {
+}) {
   return (
     <div className="min-h-screen">
       <Header />
