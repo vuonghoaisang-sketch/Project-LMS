@@ -17,7 +17,7 @@ export default function Sidebar() {
         <Link href="/courses">Courses</Link>
 
         {(user?.role === 'admin' || user?.role === 'instructor') && (
-          <Link href="/dashboard/create-course">Create Course</Link>
+          <Link href="/create-course">Create Course</Link>
         )}
 
         {user?.role === 'admin' && (

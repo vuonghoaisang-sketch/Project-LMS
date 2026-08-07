@@ -55,3 +55,56 @@ export async function getCourses() {
 
   return rows;
 }
+
+export async function findCourseById(id: number) {
+  const [rows] = await db.query(
+    `
+    SELECT
+      c.*,
+      u.name AS instructor_name
+    FROM courses c
+    JOIN users u
+      ON c.created_by = u.id
+    WHERE c.id = ?
+    `,
+    [id],
+  );
+
+  const courses = rows as any[];
+
+  return courses[0];
+}
+
+export async function updateCourse(id: number, course: Course) {
+  const [result] = await db.execute(
+    `
+    UPDATE courses
+    SET
+      title = ?,
+      description = ?,
+      thumbnail = ?,
+      price = ?
+    WHERE id = ?
+    `,
+    [
+      course.title,
+      course.description ?? null,
+      course.thumbnail ?? null,
+      course.price ?? 0,
+      id,
+    ],
+  );
+
+  return result;
+}
+
+export async function deleteCourse(id: number) {
+  const [result] = await db.execute(
+    `
+    DELETE FROM courses
+    WHERE id = ?
+    `,
+    [id],
+  );
+  return result;
+}
