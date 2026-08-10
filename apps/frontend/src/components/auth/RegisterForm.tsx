@@ -1,33 +1,61 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import AuthCard from './AuthCard';
 import AuthTitle from './AuthTitle';
-
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 
+import api from '@/lib/axios';
+
 export default function RegisterForm() {
+  const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    console.log({
-      fullName,
-      email,
-      password,
-      confirmPassword,
-    });
+    setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await api.post('/auth/register', {
+        name: fullName,
+        email,
+        password,
+      });
+
+      alert('Register successfully');
+
+      router.push('/login');
+    } catch (error: any) {
+      console.error(error);
+
+      setError(error?.response?.data?.message || 'Register failed');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <AuthCard>
-      <AuthTitle title="Create Account" description="Create your LMS account" />
+      <AuthTitle title="Register" description="Create your account" />
+
+      {error && <p className="text-red-600">{error}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -58,7 +86,9 @@ export default function RegisterForm() {
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
 
-        <Button type="submit">Register</Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Registering...' : 'Register'}
+        </Button>
       </form>
     </AuthCard>
   );

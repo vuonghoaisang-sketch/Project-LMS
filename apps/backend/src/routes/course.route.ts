@@ -3,14 +3,19 @@ import { Router } from "express";
 import {
   createCourseController,
   getCoursesController,
+  getCourseDetailController,
+  updateCourseController,
+  deleteCourseController,
 } from "../controllers/course.controller";
-import { getCourseDetailController } from "../controllers/course.controller";
+
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { requireRole } from "../middlewares/role.middleware";
-import { updateCourseController } from "../controllers/course.controller";
-import { deleteCourseController } from "../controllers/course.controller";
+import { requireCourseOwner } from "../middlewares/ownership.middleware";
+
 const router = Router();
 
+// Create Course
+// Admin + Instructor
 router.post(
   "/",
   authMiddleware,
@@ -18,8 +23,34 @@ router.post(
   createCourseController,
 );
 
+// Get Courses
+// Public
 router.get("/", getCoursesController);
+
+// Get Course Detail
+// Public
 router.get("/:id", getCourseDetailController);
-router.put("/:id", authMiddleware, updateCourseController);
-router.delete("/:id", authMiddleware, deleteCourseController);
+
+// Update Course
+// Admin → tất cả course
+// Instructor → chỉ course của mình
+router.put(
+  "/:id",
+  authMiddleware,
+  requireRole(["admin", "instructor"]),
+  requireCourseOwner,
+  updateCourseController,
+);
+
+// Delete Course
+// Admin → tất cả course
+// Instructor → chỉ course của mình
+router.delete(
+  "/:id",
+  authMiddleware,
+  requireRole(["admin", "instructor"]),
+  requireCourseOwner,
+  deleteCourseController,
+);
+
 export default router;

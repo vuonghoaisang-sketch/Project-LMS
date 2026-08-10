@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { deleteCourse } from '@/services/course.service';
 import { useRouter } from 'next/navigation';
 import LessonList from '@/components/lesson/LessonList';
-
+import { checkEnrollment, enrollCourse } from '@/services/enrollment.service';
 interface Props {
   params: Promise<{
     id: string;
@@ -17,11 +17,16 @@ interface Props {
 export default function CourseDetailPage({ params }: Props) {
   const [course, setCourse] = useState<Course | null>(null);
   const router = useRouter();
+  const [enrolled, setEnrolled] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
   useEffect(() => {
     async function loadCourse() {
       const { id } = await params;
-      const data = await getCourseById(Number(id));
+      const courseId = Number(id);
+      const data = await getCourseById(courseId);
       setCourse(data);
+      const enrollment = await checkEnrollment(courseId);
+      setEnrolled(enrollment.enrolled);
     }
 
     loadCourse();
@@ -39,6 +44,20 @@ export default function CourseDetailPage({ params }: Props) {
     alert('Delete successfully');
     router.push('/courses');
   }
+  async function handleEnroll() {
+    if (!course) return;
+    try {
+      setEnrolling(true);
+      await enrollCourse(course.id!);
+      setEnrolled(true);
+      alert('Enroll course successfully');
+    } catch (error: any) {
+      console.error(error);
+      alert(error?.response?.data?.message || 'Enroll course failed');
+    } finally {
+      setEnrolling(false);
+    }
+  }
   return (
     <div>
       <h1 className="text-3xl font-bold">{course.title}</h1>
@@ -53,6 +72,24 @@ export default function CourseDetailPage({ params }: Props) {
         <p>
           <strong>Price:</strong> ${course.price}
         </p>
+
+        {!enrolled && (
+          <button
+            onClick={handleEnroll}
+            disabled={enrolling}
+            className="mt-5 rounded bg-green-600 px-5 py-2 text-white disabled:opacity-50"
+          >
+            {enrolling ? 'Enrolling...' : 'Enroll Course'}
+          </button>
+        )}
+
+        {enrolled && (
+          <p className="mt-5 font-medium text-green-600">
+            ✓ You are enrolled in this course
+          </p>
+        )}
+
+        <br />
 
         <Link
           href={`/courses/${course.id}/edit`}

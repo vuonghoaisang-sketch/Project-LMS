@@ -1,27 +1,40 @@
 'use client';
 
 import Link from 'next/link';
+
 import { getUser } from '@/utils/auth';
 
 export default function Sidebar() {
   const user = getUser();
 
   return (
-    <aside className="min-h-screen w-64 border-r p-5">
+    <aside className="p-6">
       <h2 className="mb-6 text-xl font-bold">Dashboard</h2>
-
       <nav className="space-y-3">
-        <Link href="/">Home</Link>
-        <hr />
-
-        <Link href="/courses">Courses</Link>
-
-        {(user?.role === 'admin' || user?.role === 'instructor') && (
-          <Link href="/create-course">Create Course</Link>
+        {/* Public */}
+        <Link href="/" className="block">
+          Home
+        </Link>
+        <Link href="/courses" className="block">
+          Courses
+        </Link>
+        {/* Student */}
+        {user?.role === 'student' && (
+          <Link href="/my-courses" className="block">
+            My Courses
+          </Link>
         )}
-
+        {/* Admin + Instructor */}
+        {(user?.role === 'admin' || user?.role === 'instructor') && (
+          <Link href="/create-course" className="block">
+            Create Course
+          </Link>
+        )}
+        {/* Admin */}
         {user?.role === 'admin' && (
-          <Link href="/dashboard/users">Manage Users</Link>
+          <Link href="/users" className="block">
+            Manage Users
+          </Link>
         )}
       </nav>
     </aside>

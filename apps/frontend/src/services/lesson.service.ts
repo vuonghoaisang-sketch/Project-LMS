@@ -6,6 +6,12 @@ export async function getLessonsByCourse(courseId: number) {
   return response.data;
 }
 
+export async function getLessonById(id: number) {
+  const response = await api.get(`/lessons/${id}`);
+
+  return response.data;
+}
+
 export async function createLesson(
   courseId: number,
   data: {

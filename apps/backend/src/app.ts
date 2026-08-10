@@ -4,6 +4,7 @@ import courseRoute from "./routes/course.route";
 import authRoute from "./routes/auth.route";
 import testRoute from "./routes/test.route";
 import lessonRoute from "./routes/lesson.route";
+import enrollmentRoute from "./routes/enrollment.route";
 const app = express();
 
 app.use(
@@ -19,4 +20,5 @@ app.use("/api", testRoute);
 app.use("/api/courses", courseRoute);
 
 app.use("/api", lessonRoute);
+app.use("/api/enrollments", enrollmentRoute);
 export default app;
