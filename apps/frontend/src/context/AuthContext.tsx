@@ -7,6 +7,7 @@ import {
   useState,
   ReactNode,
 } from 'react';
+
 import api from '@/lib/axios';
 
 type User = {
@@ -19,40 +20,64 @@ type User = {
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  loginUser: (user: User, token: string) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    async function getUser() {
+    async function getCurrentUser() {
       try {
         const token = localStorage.getItem('token');
+
         if (!token) {
           setLoading(false);
           return;
         }
+
         const res = await api.get('/auth/me');
+
         setUser(res.data.user);
       } catch (error) {
+        console.error('Get current user failed:', error);
+
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
+
+        setUser(null);
       } finally {
         setLoading(false);
       }
     }
-    getUser();
+
+    getCurrentUser();
   }, []);
+
+  function loginUser(user: User, token: string) {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+
+    setUser(user);
+  }
+
   function logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
     setUser(null);
   }
+
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
+        loginUser,
         logout,
       }}
     >
@@ -63,8 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error('useAuth must be inside AuthProvider');
   }
+
   return context;
 }
