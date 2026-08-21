@@ -9,7 +9,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 
 import api from '@/lib/axios';
-
+// import { getErrorMessage } from '@/utils/error';
 export default function RegisterForm() {
   const router = useRouter();
   const [fullName, setFullName] = useState('');

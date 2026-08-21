@@ -1,5 +1,5 @@
 import { Router } from "express";
-
+import { requireCourseEnrollment } from "../middlewares/course-access.middleware";
 import {
   createLessonController,
   getLessonsController,
@@ -10,10 +10,13 @@ import {
 
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { requireRole } from "../middlewares/role.middleware";
+
 import {
   requireCourseOwner,
   requireLessonOwner,
 } from "../middlewares/ownership.middleware";
+
+import { requireLessonEnrollment } from "../middlewares/enrollment.middleware";
 
 const router = Router();
 
@@ -23,9 +26,9 @@ const router = Router();
 
 // POST /api/courses/:courseId/lessons
 // Admin + Instructor
-//
 // Instructor chỉ được tạo lesson
 // trong course của chính mình.
+
 router.post(
   "/courses/:courseId/lessons",
   authMiddleware,
@@ -36,19 +39,32 @@ router.post(
 
 // GET /api/courses/:courseId/lessons
 // Public
-router.get("/courses/:courseId/lessons", getLessonsController);
+router.get(
+  "/courses/:courseId/lessons",
+  authMiddleware,
+  requireCourseEnrollment,
+  getLessonsController,
+);
 
 // ========================================
 // LESSON
 // ========================================
 
 // GET /api/lessons/:id
-// Public / enrollment logic xử lý ở tầng khác
-router.get("/lessons/:id", getLessonController);
+// Student phải enroll mới được xem
+// Admin + Instructor có thể xem
+//0988697737
+router.get(
+  "/lessons/:id",
+  authMiddleware,
+  requireLessonEnrollment,
+  getLessonController,
+);
 
 // PUT /api/lessons/:id
 // Admin → tất cả
 // Instructor → lesson thuộc course của mình
+
 router.put(
   "/lessons/:id",
   authMiddleware,
@@ -60,6 +76,7 @@ router.put(
 // DELETE /api/lessons/:id
 // Admin → tất cả
 // Instructor → lesson thuộc course của mình
+
 router.delete(
   "/lessons/:id",
   authMiddleware,

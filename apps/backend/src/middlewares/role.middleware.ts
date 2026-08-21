@@ -6,12 +6,14 @@ export function requireRole(roles: string[]) {
 
     if (!user) {
       return res.status(401).json({
+        success: false,
         message: "Unauthorized",
       });
     }
 
     if (!roles.includes(user.role)) {
       return res.status(403).json({
+        success: false,
         message: "You don't have permission",
       });
     }

@@ -5,11 +5,13 @@ import {
   getEnrollmentCount,
 } from "../models/enrollment.model";
 
+import AppError from "../utils/AppError";
+
 export async function enrollUser(userId: number, courseId: number) {
   const existingEnrollment = await findEnrollment(userId, courseId);
 
   if (existingEnrollment) {
-    throw new Error("User already enrolled in this course");
+    throw new AppError("User already enrolled in this course", 409);
   }
 
   return createEnrollment(userId, courseId);

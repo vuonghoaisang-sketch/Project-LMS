@@ -3,13 +3,13 @@ import api from '@/lib/axios';
 export async function getLessonsByCourse(courseId: number) {
   const response = await api.get(`/courses/${courseId}/lessons`);
 
-  return response.data;
+  return response.data.lessons;
 }
 
 export async function getLessonById(id: number) {
   const response = await api.get(`/lessons/${id}`);
 
-  return response.data;
+  return response.data.lesson;
 }
 
 export async function createLesson(
