@@ -31,12 +31,11 @@ export default function LoginForm() {
       });
 
       localStorage.setItem('token', result.token);
-
       localStorage.setItem('user', JSON.stringify(result.user));
 
       router.push('/');
     } catch (error) {
-      setError(getErrorMessage(error));
+      console.error(error);
     }
   };
 

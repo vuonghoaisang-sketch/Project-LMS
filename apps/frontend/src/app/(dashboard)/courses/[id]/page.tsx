@@ -8,6 +8,10 @@ import { deleteCourse } from '@/services/course.service';
 import { useRouter } from 'next/navigation';
 import LessonList from '@/components/lesson/LessonList';
 import { checkEnrollment, enrollCourse } from '@/services/enrollment.service';
+import Loading from '@/components/ui/Loading';
+import ErrorState from '@/components/ui/ErrorState';
+import EmptyState from '@/components/ui/EmptyState';
+
 interface Props {
   params: Promise<{
     id: string;
@@ -19,21 +23,48 @@ export default function CourseDetailPage({ params }: Props) {
   const router = useRouter();
   const [enrolled, setEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   useEffect(() => {
     async function loadCourse() {
-      const { id } = await params;
-      const courseId = Number(id);
-      const data = await getCourseById(courseId);
-      setCourse(data);
-      const enrollment = await checkEnrollment(courseId);
-      setEnrolled(enrollment.enrolled);
+      try {
+        setLoading(true);
+        setError('');
+
+        const { id } = await params;
+        const courseId = Number(id);
+
+        const data = await getCourseById(courseId);
+        setCourse(data);
+
+        const enrollment = await checkEnrollment(courseId);
+        setEnrolled(enrollment.enrolled);
+      } catch (error) {
+        console.error(error);
+        setError('Failed to load course.');
+      } finally {
+        setLoading(false);
+      }
     }
 
     loadCourse();
   }, [params]);
 
+  if (loading) {
+    return <Loading text="Loading course..." fullScreen />;
+  }
+
+  if (error) {
+    return <ErrorState description={error} />;
+  }
+
   if (!course) {
-    return <p>Loading...</p>;
+    return (
+      <EmptyState
+        title="Course not found"
+        description="The course you're looking for does not exist."
+      />
+    );
   }
 
   async function handleDelete() {

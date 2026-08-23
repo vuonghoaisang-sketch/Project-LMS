@@ -7,6 +7,10 @@ import { getLessonById } from '@/services/lesson.service';
 import { checkEnrollment } from '@/services/enrollment.service';
 import { Lesson } from '@/types/lesson';
 
+import Loading from '@/components/ui/Loading';
+import EmptyState from '@/components/ui/EmptyState';
+import ErrorState from '@/components/ui/ErrorState';
+
 interface Props {
   params: Promise<{
     id: string;
@@ -18,13 +22,9 @@ export default function LessonDetailPage({ params }: Props) {
   const router = useRouter();
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
-
   const [loading, setLoading] = useState(true);
-
   const [hasAccess, setHasAccess] = useState(false);
-
   const [error, setError] = useState('');
-
   const [courseId, setCourseId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -40,7 +40,6 @@ export default function LessonDetailPage({ params }: Props) {
 
         setCourseId(courseIdNumber);
 
-        // Kiểm tra user đã enroll course chưa
         const enrollment = await checkEnrollment(courseIdNumber);
 
         if (!enrollment.enrolled) {
@@ -48,7 +47,6 @@ export default function LessonDetailPage({ params }: Props) {
           return;
         }
 
-        // Nếu đã enroll thì lấy lesson
         const data = await getLessonById(lessonIdNumber);
 
         setLesson(data);
@@ -56,7 +54,10 @@ export default function LessonDetailPage({ params }: Props) {
       } catch (error: any) {
         console.error(error);
 
-        setError(error?.response?.data?.message || 'Something went wrong');
+        setError(
+          error?.response?.data?.message ||
+            'Something went wrong while loading the lesson.',
+        );
       } finally {
         setLoading(false);
       }
@@ -65,39 +66,32 @@ export default function LessonDetailPage({ params }: Props) {
     loadLesson();
   }, [params]);
 
-  // Đang kiểm tra
   if (loading) {
-    return (
-      <div className="p-6">
-        <p>Loading...</p>
-      </div>
-    );
+    return <Loading text="Loading lesson..." fullScreen />;
   }
 
-  // Có lỗi
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-        <h1 className="text-xl font-bold text-red-600">Error</h1>
-
-        <p className="mt-2 text-red-500">{error}</p>
-
-        <button
-          onClick={() => router.back()}
-          className="mt-5 rounded bg-gray-800 px-4 py-2 text-white"
-        >
-          Go Back
-        </button>
-      </div>
+      <ErrorState
+        title="Unable to load lesson"
+        description={error}
+        action={
+          <button
+            onClick={() => router.back()}
+            className="rounded bg-gray-800 px-4 py-2 text-white"
+          >
+            Go Back
+          </button>
+        }
+      />
     );
   }
 
-  // Chưa enroll
   if (!hasAccess) {
     return (
       <div className="max-w-2xl rounded-xl border p-8">
         <h1 className="text-2xl font-bold">
-          You need to enroll this course first.
+          You need to enroll in this course first.
         </h1>
 
         <p className="mt-3 text-gray-600">
@@ -118,12 +112,20 @@ export default function LessonDetailPage({ params }: Props) {
     );
   }
 
-  // Không tìm thấy lesson
   if (!lesson) {
     return (
-      <div className="p-6">
-        <p>Lesson not found.</p>
-      </div>
+      <EmptyState
+        title="Lesson not found"
+        description="The lesson you're looking for does not exist."
+        action={
+          <button
+            onClick={() => router.back()}
+            className="rounded bg-gray-800 px-4 py-2 text-white"
+          >
+            Go Back
+          </button>
+        }
+      />
     );
   }
 
@@ -157,7 +159,6 @@ export default function LessonDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-5xl">
-      {/* Back */}
       <button
         onClick={() => {
           if (courseId) {
@@ -169,14 +170,12 @@ export default function LessonDetailPage({ params }: Props) {
         ← Back to Course
       </button>
 
-      {/* Lesson title */}
       <div className="mb-6">
         <p className="text-sm text-gray-500">Lesson {lesson.position}</p>
 
         <h1 className="mt-2 text-3xl font-bold">{lesson.title}</h1>
       </div>
 
-      {/* Video */}
       {videoUrl ? (
         <div className="overflow-hidden rounded-xl bg-black">
           <div className="aspect-video">
@@ -184,15 +183,7 @@ export default function LessonDetailPage({ params }: Props) {
               src={videoUrl}
               title={lesson.title}
               className="h-full w-full"
-              allow="
-                accelerometer;
-                autoplay;
-                clipboard-write;
-                encrypted-media;
-                gyroscope;
-                picture-in-picture;
-                web-share
-              "
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             />
           </div>
@@ -203,7 +194,6 @@ export default function LessonDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Description */}
       <div className="mt-8">
         <h2 className="text-xl font-bold">Description</h2>
 
@@ -212,7 +202,6 @@ export default function LessonDetailPage({ params }: Props) {
         </p>
       </div>
 
-      {/* Actions */}
       <div className="mt-8 flex gap-3">
         <button
           onClick={() => {
