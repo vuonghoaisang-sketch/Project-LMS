@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { getCourseById, deleteCourse } from '@/services/course.service';
-
 import { checkEnrollment, enrollCourse } from '@/services/enrollment.service';
 
 import { Course } from '@/types/course';
@@ -51,18 +50,12 @@ export default function CourseDetailPage({ params }: Props) {
 
         setCourse(data);
 
-        /*
-         * Student phải kiểm tra enrollment.
-         *
-         * Admin và Instructor không cần enrollment
-         * để xem course.
-         */
         if (user?.role === 'student') {
           const enrollment = await checkEnrollment(courseId);
 
           setEnrolled(enrollment.enrolled);
         } else {
-          setEnrolled(true);
+          setEnrolled(false);
         }
       } catch (error) {
         console.error(error);
@@ -118,17 +111,14 @@ export default function CourseDetailPage({ params }: Props) {
     }
   }
 
-  // Auth đang loading
   if (authLoading) {
     return <Loading text="Loading user..." />;
   }
 
-  // Course đang loading
   if (loading) {
     return <Loading text="Loading course..." />;
   }
 
-  // Có lỗi
   if (error) {
     return (
       <div className="max-w-xl">
@@ -144,7 +134,6 @@ export default function CourseDetailPage({ params }: Props) {
     );
   }
 
-  // Không tìm thấy course
   if (!course) {
     return (
       <div className="max-w-xl">
@@ -162,7 +151,6 @@ export default function CourseDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-5xl">
-      {/* Back */}
       <Link
         href="/courses"
         className="mb-6 inline-block rounded border px-4 py-2 hover:bg-gray-50"
@@ -170,7 +158,6 @@ export default function CourseDetailPage({ params }: Props) {
         ← Back to Courses
       </Link>
 
-      {/* Course information */}
       <div className="rounded-xl border bg-white p-6 shadow-sm">
         <h1 className="text-3xl font-bold">{course.title}</h1>
 
@@ -186,7 +173,6 @@ export default function CourseDetailPage({ params }: Props) {
           </p>
         </div>
 
-        {/* Student actions */}
         {user?.role === 'student' && (
           <div className="mt-6">
             {!enrolled ? (
@@ -205,7 +191,6 @@ export default function CourseDetailPage({ params }: Props) {
           </div>
         )}
 
-        {/* Admin / Instructor actions */}
         {(user?.role === 'admin' || user?.role === 'instructor') && (
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -225,10 +210,8 @@ export default function CourseDetailPage({ params }: Props) {
         )}
       </div>
 
-      {/* Lessons */}
       <LessonList courseId={course.id!} />
 
-      {/* Add Lesson */}
       {(user?.role === 'admin' || user?.role === 'instructor') && (
         <Link
           href={`/courses/${course.id}/lessons/create`}

@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation';
 
 import { getLessonById } from '@/services/lesson.service';
 import { checkEnrollment } from '@/services/enrollment.service';
+
 import { Lesson } from '@/types/lesson';
+
+import { useAuth } from '@/context/AuthContext';
 
 import Loading from '@/components/ui/Loading';
 import EmptyState from '@/components/ui/EmptyState';
@@ -21,13 +24,20 @@ interface Props {
 export default function LessonDetailPage({ params }: Props) {
   const router = useRouter();
 
+  const { user, loading: authLoading } = useAuth();
+
   const [lesson, setLesson] = useState<Lesson | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+
   const [error, setError] = useState('');
+
   const [courseId, setCourseId] = useState<number | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+
     async function loadLesson() {
       try {
         setLoading(true);
@@ -40,17 +50,30 @@ export default function LessonDetailPage({ params }: Props) {
 
         setCourseId(courseIdNumber);
 
-        const enrollment = await checkEnrollment(courseIdNumber);
+        /*
+         * Admin và Instructor
+         * được xem lesson mà không cần enrollment.
+         */
+        if (user?.role === 'admin' || user?.role === 'instructor') {
+          setHasAccess(true);
+        } else {
+          /*
+           * Student phải enroll course
+           * mới được xem lesson.
+           */
+          const enrollment = await checkEnrollment(courseIdNumber);
 
-        if (!enrollment.enrolled) {
-          setHasAccess(false);
-          return;
+          if (!enrollment.enrolled) {
+            setHasAccess(false);
+            return;
+          }
+
+          setHasAccess(true);
         }
 
         const data = await getLessonById(lessonIdNumber);
 
         setLesson(data);
-        setHasAccess(true);
       } catch (error: any) {
         console.error(error);
 
@@ -64,7 +87,11 @@ export default function LessonDetailPage({ params }: Props) {
     }
 
     loadLesson();
-  }, [params]);
+  }, [params, user, authLoading]);
+
+  if (authLoading) {
+    return <Loading text="Loading user..." fullScreen />;
+  }
 
   if (loading) {
     return <Loading text="Loading lesson..." fullScreen />;
@@ -165,7 +192,7 @@ export default function LessonDetailPage({ params }: Props) {
             router.push(`/courses/${courseId}`);
           }
         }}
-        className="mb-6 rounded border px-4 py-2"
+        className="mb-6 rounded border px-4 py-2 hover:bg-gray-50"
       >
         ← Back to Course
       </button>
@@ -202,29 +229,31 @@ export default function LessonDetailPage({ params }: Props) {
         </p>
       </div>
 
-      <div className="mt-8 flex gap-3">
-        <button
-          onClick={() => {
-            if (courseId) {
-              router.push(`/courses/${courseId}/lessons/${lesson.id}/edit`);
-            }
-          }}
-          className="rounded bg-blue-600 px-5 py-2 text-white"
-        >
-          Edit Lesson
-        </button>
+      {(user?.role === 'admin' || user?.role === 'instructor') && (
+        <div className="mt-8 flex gap-3">
+          <button
+            onClick={() => {
+              if (courseId) {
+                router.push(`/courses/${courseId}/lessons/${lesson.id}/edit`);
+              }
+            }}
+            className="rounded bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+          >
+            Edit Lesson
+          </button>
 
-        <button
-          onClick={() => {
-            if (courseId) {
-              router.push(`/courses/${courseId}`);
-            }
-          }}
-          className="rounded border px-5 py-2"
-        >
-          Course Details
-        </button>
-      </div>
+          <button
+            onClick={() => {
+              if (courseId) {
+                router.push(`/courses/${courseId}`);
+              }
+            }}
+            className="rounded border px-5 py-2"
+          >
+            Course Details
+          </button>
+        </div>
+      )}
     </div>
   );
 }
