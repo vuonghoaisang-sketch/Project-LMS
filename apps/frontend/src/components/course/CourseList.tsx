@@ -1,16 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { getCourses } from '@/services/course.service';
+import { getErrorMessage } from '@/utils/error';
+
 import CourseCard from './CourseCard';
+
 import { Course } from '@/types/course';
 
-import Loading from '@/components/ui/Loading';
-import EmptyState from '@/components/ui/EmptyState';
+import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
+import EmptyState from '@/components/ui/EmptyState';
 
 export default function CourseList() {
   const [courses, setCourses] = useState<Course[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -25,7 +30,8 @@ export default function CourseList() {
         setCourses(data);
       } catch (error) {
         console.error(error);
-        setError('Failed to load courses.');
+
+        setError(getErrorMessage(error));
       } finally {
         setLoading(false);
       }
@@ -35,20 +41,15 @@ export default function CourseList() {
   }, []);
 
   if (loading) {
-    return <Loading text="Loading courses..." />;
+    return <LoadingState message="Loading courses..." />;
   }
 
   if (error) {
-    return <ErrorState description={error} />;
+    return <ErrorState message={error} />;
   }
 
   if (courses.length === 0) {
-    return (
-      <EmptyState
-        title="No courses found"
-        description="There are no courses available at the moment."
-      />
-    );
+    return <EmptyState message="No courses available." />;
   }
 
   return (

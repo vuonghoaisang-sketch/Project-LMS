@@ -9,20 +9,14 @@ import {
 } from 'react';
 
 import api from '@/lib/axios';
+import { User } from '@/types/user';
 
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-};
-
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
   loading: boolean;
   loginUser: (user: User, token: string) => void;
   logout: () => void;
-};
+}
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -42,7 +36,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const res = await api.get('/auth/me');
 
-        setUser(res.data.user);
+        const currentUser = res.data.user;
+
+        setUser(currentUser);
+        localStorage.setItem('user', JSON.stringify(currentUser));
       } catch (error) {
         console.error('Get current user failed:', error);
 

@@ -2,27 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
 import { deleteLesson, getLessonsByCourse } from '@/services/lesson.service';
-
+import { getErrorMessage } from '@/utils/error';
 import { Lesson } from '@/types/lesson';
-import { useAuth } from '@/context/AuthContext';
-
-interface Props {
-  courseId: number;
-}
-
-export default function LessonList({ courseId }: Props) {
-  const { user, loading: authLoading } = useAuth();
-
+import LoadingState from '@/components/ui/LoadingState';
+import ErrorState from '@/components/ui/ErrorState';
+import EmptyState from '@/components/ui/EmptyState';
+export default function LessonList({ courseId }: { courseId: number }) {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (authLoading) return;
-
-    async function loadLessons() {
+    async function load() {
       try {
         setLoading(true);
         setError('');
@@ -30,20 +22,20 @@ export default function LessonList({ courseId }: Props) {
         const data = await getLessonsByCourse(courseId);
 
         setLessons(data);
-      } catch (error: any) {
+      } catch (error) {
         console.error(error);
 
-        setError(error?.response?.data?.message || 'Failed to load lessons.');
+        setError(getErrorMessage(error));
       } finally {
         setLoading(false);
       }
     }
 
-    loadLessons();
-  }, [courseId, authLoading]);
+    load();
+  }, [courseId]);
 
   async function handleDelete(id: number) {
-    const ok = confirm('Are you sure you want to delete this lesson?');
+    const ok = confirm('Delete this lesson?');
 
     if (!ok) return;
 
@@ -53,32 +45,31 @@ export default function LessonList({ courseId }: Props) {
       setLessons((currentLessons) =>
         currentLessons.filter((lesson) => lesson.id !== id),
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
 
-      alert(error?.response?.data?.message || 'Delete lesson failed.');
+      alert(getErrorMessage(error));
     }
   }
 
-  const canManageLessons =
-    user?.role === 'admin' || user?.role === 'instructor';
-
-  if (authLoading || loading) {
+  // Loading state
+  if (loading) {
     return (
       <div className="mt-10">
         <h2 className="mb-5 text-2xl font-bold">Lessons</h2>
 
-        <p className="text-gray-500">Loading lessons...</p>
+        <LoadingState message="Loading lessons..." />
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="mt-10 rounded-xl border border-red-200 bg-red-50 p-5">
-        <h2 className="text-lg font-bold text-red-600">Something went wrong</h2>
+      <div className="mt-10">
+        <h2 className="mb-5 text-2xl font-bold">Lessons</h2>
 
-        <p className="mt-2 text-red-500">{error}</p>
+        <ErrorState message={error} />
       </div>
     );
   }
@@ -87,14 +78,12 @@ export default function LessonList({ courseId }: Props) {
     <div className="mt-10">
       <h2 className="mb-5 text-2xl font-bold">Lessons</h2>
 
-      {lessons.length === 0 ? (
-        <div className="rounded-xl border p-6 text-center">
-          <p className="text-gray-500">No lessons available for this course.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {lessons.map((lesson) => (
-            <div key={lesson.id} className="rounded-xl border p-4">
+      <div className="space-y-3">
+        {lessons.length === 0 ? (
+          <EmptyState message="This course has no lessons yet." />
+        ) : (
+          lessons.map((lesson) => (
+            <div key={lesson.id} className="rounded-lg border p-4">
               <h3 className="font-semibold">
                 {lesson.position}. {lesson.title}
               </h3>
@@ -104,33 +93,30 @@ export default function LessonList({ courseId }: Props) {
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href={`/courses/${lesson.course_id}/lessons/${lesson.id}`}
-                  className="rounded bg-green-600 px-3 py-1 text-white"
+                  className="rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700"
                 >
                   View Lesson
                 </Link>
 
-                {canManageLessons && (
-                  <>
-                    <Link
-                      href={`/courses/${lesson.course_id}/lessons/${lesson.id}/edit`}
-                      className="rounded bg-blue-600 px-3 py-1 text-white"
-                    >
-                      Edit
-                    </Link>
+                <Link
+                  href={`/courses/${lesson.course_id}/lessons/${lesson.id}/edit`}
+                  className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-700"
+                >
+                  Edit
+                </Link>
 
-                    <button
-                      onClick={() => handleDelete(lesson.id)}
-                      className="rounded bg-red-600 px-3 py-1 text-white"
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleDelete(lesson.id)}
+                  className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
+                >
+                  Delete
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }

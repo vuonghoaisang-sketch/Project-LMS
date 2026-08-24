@@ -10,6 +10,8 @@ import Loading from '@/components/ui/Loading';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorState from '@/components/ui/ErrorState';
 
+import { getErrorMessage } from '@/utils/error';
+
 export default function MyCoursesPage() {
   const [courses, setCourses] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +28,8 @@ export default function MyCoursesPage() {
         setCourses(data);
       } catch (error) {
         console.error(error);
-        setError('Failed to load your courses.');
+
+        setError(getErrorMessage(error));
       } finally {
         setLoading(false);
       }
@@ -40,16 +43,11 @@ export default function MyCoursesPage() {
   }
 
   if (error) {
-    return <ErrorState description={error} />;
+    return <ErrorState message={error} />;
   }
 
   if (courses.length === 0) {
-    return (
-      <EmptyState
-        title="No courses yet"
-        description="You haven't enrolled in any course yet."
-      />
-    );
+    return <EmptyState message="You haven't enrolled in any course yet." />;
   }
 
   return (
@@ -69,7 +67,7 @@ export default function MyCoursesPage() {
 
             <Link
               href={`/courses/${course.course_id}`}
-              className="mt-5 inline-block rounded bg-blue-600 px-4 py-2 text-white"
+              className="mt-5 inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
               Go to Course
             </Link>

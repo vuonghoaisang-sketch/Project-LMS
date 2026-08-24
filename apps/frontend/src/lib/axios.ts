@@ -28,17 +28,37 @@ api.interceptors.response.use(
   (response) => {
     return response;
   },
+
   (error) => {
     if (!error.response) {
-      console.error('Network error');
+      console.error('Network error: Backend may be offline.');
+
       return Promise.reject(error);
     }
 
     const status = error.response.status;
 
     if (status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
+
+    if (status === 403) {
+      console.error('Forbidden: You do not have permission.');
+    }
+
+    if (status === 404) {
+      console.error('Resource not found.');
+    }
+
+    if (status === 409) {
+      console.error('Conflict:', error.response.data?.message);
+    }
+
+    if (status >= 500) {
+      console.error('Server error.');
     }
 
     return Promise.reject(error);

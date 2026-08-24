@@ -1,25 +1,23 @@
-import type { ReactNode } from 'react';
-
 interface ErrorStateProps {
   title?: string;
+  message?: string;
   description?: string;
-  action?: ReactNode;
+  action?: React.ReactNode;
 }
 
 export default function ErrorState({
   title = 'Something went wrong',
-  description = 'We could not load this data. Please try again.',
+  message,
+  description,
   action,
 }: ErrorStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-red-200 bg-red-50 px-6 py-12 text-center">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-        <span className="text-xl font-bold text-red-600">!</span>
-      </div>
+    <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
+      <h2 className="text-xl font-bold text-red-700">{title}</h2>
 
-      <h3 className="text-lg font-semibold text-red-900">{title}</h3>
-
-      <p className="mt-2 max-w-md text-sm text-red-600">{description}</p>
+      <p className="mt-2 text-red-600">
+        {description || message || 'An unexpected error occurred.'}
+      </p>
 
       {action && <div className="mt-5">{action}</div>}
     </div>

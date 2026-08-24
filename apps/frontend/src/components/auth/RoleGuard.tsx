@@ -1,38 +1,32 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { getUser } from '@/utils/auth';
+import { ReactNode } from 'react';
+
+import { useAuth } from '@/context/AuthContext';
+import { UserRole } from '@/types/user';
+import Loading from '@/components/ui/Loading';
+import ErrorState from '@/components/ui/ErrorState';
 
 interface RoleGuardProps {
-  allowedRoles: string[];
-  children: React.ReactNode;
+  allowedRoles: UserRole[];
+  children: ReactNode;
 }
 
 export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
-  const router = useRouter();
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    const user = getUser();
-
-    if (!user) {
-      router.replace('/login');
-      return;
-    }
-
-    if (!allowedRoles.includes(user.role)) {
-      router.replace('/courses');
-    }
-  }, [router, allowedRoles]);
-
-  const user = getUser();
+  if (loading) {
+    return <Loading text="Checking permission..." />;
+  }
 
   if (!user) {
-    return null;
+    return <ErrorState message="You must be logged in to access this page." />;
   }
 
   if (!allowedRoles.includes(user.role)) {
-    return null;
+    return (
+      <ErrorState message="You don't have permission to access this page." />
+    );
   }
 
   return <>{children}</>;
