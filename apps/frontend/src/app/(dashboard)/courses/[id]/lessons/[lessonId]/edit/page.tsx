@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { getLessonById, updateLesson } from '@/services/lesson.service';
-
 import { Lesson } from '@/types/lesson';
+import { lessonSchema } from '@/schemas/lesson.schema';
+import FormError from '@/components/ui/FormError';
 
 interface Props {
   params: Promise<{
@@ -25,21 +26,27 @@ export default function EditLessonPage({ params }: Props) {
   const [position, setPosition] = useState(1);
 
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     async function loadLesson() {
-      const { lessonId } = await params;
+      try {
+        const { lessonId } = await params;
 
-      const data = await getLessonById(Number(lessonId));
+        const data = await getLessonById(Number(lessonId));
 
-      setLesson(data);
+        setLesson(data);
 
-      setTitle(data.title ?? '');
-      setDescription(data.description ?? '');
-      setVideoUrl(data.video_url ?? '');
-      setPosition(data.position ?? 1);
-
-      setLoading(false);
+        setTitle(data.title ?? '');
+        setDescription(data.description ?? '');
+        setVideoUrl(data.video_url ?? '');
+        setPosition(data.position ?? 1);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
 
     loadLesson();
@@ -50,18 +57,50 @@ export default function EditLessonPage({ params }: Props) {
 
     if (!lesson) return;
 
-    await updateLesson(lesson.id, {
+    setErrors({});
+    setSubmitError('');
+
+    const result = lessonSchema.safeParse({
       title,
       description,
       video_url: videoUrl,
       position,
     });
 
-    alert('Update lesson successfully');
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
 
-    const { id } = await params;
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0];
 
-    router.push(`/courses/${id}`);
+        if (typeof field === 'string') {
+          fieldErrors[field] = issue.message;
+        }
+      });
+
+      setErrors(fieldErrors);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await updateLesson(lesson.id, result.data);
+
+      alert('Update lesson successfully');
+
+      const { id } = await params;
+
+      router.push(`/courses/${id}`);
+    } catch (error: any) {
+      console.error(error);
+
+      setSubmitError(
+        error?.response?.data?.message || 'Failed to update lesson',
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (loading) {
@@ -77,6 +116,12 @@ export default function EditLessonPage({ params }: Props) {
       <h1 className="mb-6 text-3xl font-bold">Edit Lesson</h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {submitError && (
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            {submitError}
+          </div>
+        )}
+
         <div>
           <label className="mb-2 block font-medium">Title</label>
 
@@ -87,6 +132,8 @@ export default function EditLessonPage({ params }: Props) {
             className="w-full rounded border p-3"
             placeholder="Lesson title"
           />
+
+          <FormError message={errors.title} />
         </div>
 
         <div>
@@ -99,6 +146,8 @@ export default function EditLessonPage({ params }: Props) {
             placeholder="Lesson description"
             rows={5}
           />
+
+          <FormError message={errors.description} />
         </div>
 
         <div>
@@ -111,6 +160,8 @@ export default function EditLessonPage({ params }: Props) {
             className="w-full rounded border p-3"
             placeholder="https://youtube.com/..."
           />
+
+          <FormError message={errors.video_url} />
         </div>
 
         <div>
@@ -123,13 +174,16 @@ export default function EditLessonPage({ params }: Props) {
             className="w-full rounded border p-3"
             min={1}
           />
+
+          <FormError message={errors.position} />
         </div>
 
         <button
           type="submit"
-          className="rounded bg-blue-600 px-5 py-2 text-white"
+          disabled={loading}
+          className="rounded bg-blue-600 px-5 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Update Lesson
+          {loading ? 'Updating...' : 'Update Lesson'}
         </button>
       </form>
     </div>

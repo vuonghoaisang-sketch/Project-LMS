@@ -13,8 +13,8 @@ export default async function CreateLessonPage({ params }: Props) {
   return (
     <div>
       <h1 className="mb-6 text-3xl font-bold">Create Lesson</h1>
+
       <RoleGuard allowedRoles={['admin', 'instructor']}>
-        {' '}
         <LessonForm courseId={Number(id)} />
       </RoleGuard>
     </div>

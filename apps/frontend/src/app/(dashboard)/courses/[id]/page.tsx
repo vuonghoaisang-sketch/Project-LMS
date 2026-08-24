@@ -1,16 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCourseById } from '@/services/course.service';
+import { getCourseById, deleteCourse } from '@/services/course.service';
 import { Course } from '@/types/course';
 import Link from 'next/link';
-import { deleteCourse } from '@/services/course.service';
 import { useRouter } from 'next/navigation';
 import LessonList from '@/components/lesson/LessonList';
 import { checkEnrollment, enrollCourse } from '@/services/enrollment.service';
-import Loading from '@/components/ui/Loading';
-import ErrorState from '@/components/ui/ErrorState';
-import EmptyState from '@/components/ui/EmptyState';
+import { useAuth } from '@/context/AuthContext';
 
 interface Props {
   params: Promise<{
@@ -19,13 +16,18 @@ interface Props {
 }
 
 export default function CourseDetailPage({ params }: Props) {
-  const [course, setCourse] = useState<Course | null>(null);
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
+  const [course, setCourse] = useState<Course | null>(null);
   const [enrolled, setEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
   useEffect(() => {
+    if (authLoading) return;
+
     async function loadCourse() {
       try {
         setLoading(true);
@@ -37,58 +39,99 @@ export default function CourseDetailPage({ params }: Props) {
         const data = await getCourseById(courseId);
         setCourse(data);
 
-        const enrollment = await checkEnrollment(courseId);
-        setEnrolled(enrollment.enrolled);
-      } catch (error) {
+        if (user?.role === 'student') {
+          const enrollment = await checkEnrollment(courseId);
+          setEnrolled(enrollment.enrolled);
+        } else {
+          setEnrolled(true);
+        }
+      } catch (error: any) {
         console.error(error);
-        setError('Failed to load course.');
+
+        setError(error?.response?.data?.message || 'Failed to load course.');
       } finally {
         setLoading(false);
       }
     }
 
     loadCourse();
-  }, [params]);
-
-  if (loading) {
-    return <Loading text="Loading course..." fullScreen />;
-  }
-
-  if (error) {
-    return <ErrorState description={error} />;
-  }
-
-  if (!course) {
-    return (
-      <EmptyState
-        title="Course not found"
-        description="The course you're looking for does not exist."
-      />
-    );
-  }
+  }, [params, user, authLoading]);
 
   async function handleDelete() {
     if (!course) return;
-    const confirmDelete = confirm('Are you sure delete this course?');
+
+    const confirmDelete = confirm(
+      'Are you sure you want to delete this course?',
+    );
+
     if (!confirmDelete) return;
-    await deleteCourse(course.id!);
-    alert('Delete successfully');
-    router.push('/courses');
+
+    try {
+      await deleteCourse(course.id!);
+
+      alert('Delete successfully');
+
+      router.push('/courses');
+    } catch (error: any) {
+      console.error(error);
+
+      alert(error?.response?.data?.message || 'Delete course failed');
+    }
   }
+
   async function handleEnroll() {
     if (!course) return;
+
     try {
       setEnrolling(true);
+
       await enrollCourse(course.id!);
+
       setEnrolled(true);
+
       alert('Enroll course successfully');
     } catch (error: any) {
       console.error(error);
+
       alert(error?.response?.data?.message || 'Enroll course failed');
     } finally {
       setEnrolling(false);
     }
   }
+
+  if (authLoading || loading) {
+    return (
+      <div className="p-6">
+        <p>Loading course...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+        <h1 className="text-xl font-bold text-red-600">Something went wrong</h1>
+
+        <p className="mt-2 text-red-500">{error}</p>
+
+        <button
+          onClick={() => router.back()}
+          className="mt-5 rounded bg-gray-800 px-4 py-2 text-white"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="p-6">
+        <p>Course not found.</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 className="text-3xl font-bold">{course.title}</h1>
@@ -104,7 +147,7 @@ export default function CourseDetailPage({ params }: Props) {
           <strong>Price:</strong> ${course.price}
         </p>
 
-        {!enrolled && (
+        {user?.role === 'student' && !enrolled && (
           <button
             onClick={handleEnroll}
             disabled={enrolling}
@@ -114,7 +157,7 @@ export default function CourseDetailPage({ params }: Props) {
           </button>
         )}
 
-        {enrolled && (
+        {user?.role === 'student' && enrolled && (
           <p className="mt-5 font-medium text-green-600">
             ✓ You are enrolled in this course
           </p>
@@ -122,29 +165,35 @@ export default function CourseDetailPage({ params }: Props) {
 
         <br />
 
-        <Link
-          href={`/courses/${course.id}/edit`}
-          className="mt-5 inline-block rounded bg-blue-600 px-5 py-2 text-white"
-        >
-          Edit Course
-        </Link>
+        {(user?.role === 'admin' || user?.role === 'instructor') && (
+          <>
+            <Link
+              href={`/courses/${course.id}/edit`}
+              className="mt-5 inline-block rounded bg-blue-600 px-5 py-2 text-white"
+            >
+              Edit Course
+            </Link>
 
-        <button
-          onClick={handleDelete}
-          className="mt-5 ml-3 rounded bg-red-600 px-5 py-2 text-white"
-        >
-          Delete Course
-        </button>
+            <button
+              onClick={handleDelete}
+              className="mt-5 ml-3 rounded bg-red-600 px-5 py-2 text-white"
+            >
+              Delete Course
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Lesson List */}
-      <LessonList courseId={course.id} />
-      <Link
-        href={`/courses/${course.id}/lessons/create`}
-        className="mt-5 inline-block rounded bg-green-600 px-5 py-2 text-white"
-      >
-        + Add Lesson
-      </Link>
+      <LessonList courseId={course.id!} />
+
+      {(user?.role === 'admin' || user?.role === 'instructor') && (
+        <Link
+          href={`/courses/${course.id}/lessons/create`}
+          className="mt-5 inline-block rounded bg-green-600 px-5 py-2 text-white"
+        >
+          + Add Lesson
+        </Link>
+      )}
     </div>
   );
 }

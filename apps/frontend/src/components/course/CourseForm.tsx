@@ -2,34 +2,61 @@
 
 import { useState } from 'react';
 import { createCourse } from '@/services/course.service';
+import { courseSchema } from '@/schemas/course.schema';
+import FormError from '@/components/ui/FormError';
 
 export default function CourseForm() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    setErrors({});
+    setSubmitError('');
+
+    const result = courseSchema.safeParse({
+      title,
+      description,
+      price: Number(price),
+    });
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0];
+
+        if (typeof field === 'string') {
+          fieldErrors[field] = issue.message;
+        }
+      });
+
+      setErrors(fieldErrors);
+      return;
+    }
+
     try {
       setLoading(true);
 
-      await createCourse({
-        title,
-        description,
-        price: Number(price),
-      });
+      await createCourse(result.data);
 
       alert('Create course successfully!');
 
       setTitle('');
       setDescription('');
       setPrice('');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Create course failed!');
+
+      setSubmitError(
+        error?.response?.data?.message || 'Failed to create course',
+      );
     } finally {
       setLoading(false);
     }
@@ -38,8 +65,14 @@ export default function CourseForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-xl border bg-white p-6 shadow"
+      className="max-w-xl space-y-5 rounded-xl border bg-white p-6 shadow"
     >
+      {submitError && (
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          {submitError}
+        </div>
+      )}
+
       <div>
         <label className="mb-2 block font-medium">Course Title</label>
 
@@ -48,7 +81,10 @@ export default function CourseForm() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="React Masterclass"
+          disabled={loading}
         />
+
+        <FormError message={errors.title} />
       </div>
 
       <div>
@@ -59,7 +95,10 @@ export default function CourseForm() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Course description..."
+          disabled={loading}
         />
+
+        <FormError message={errors.description} />
       </div>
 
       <div>
@@ -67,16 +106,21 @@ export default function CourseForm() {
 
         <input
           type="number"
+          min="0"
           className="w-full rounded-lg border p-3"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           placeholder="99"
+          disabled={loading}
         />
+
+        <FormError message={errors.price} />
       </div>
 
       <button
+        type="submit"
         disabled={loading}
-        className="rounded-lg bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-lg bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? 'Creating...' : 'Create Course'}
       </button>

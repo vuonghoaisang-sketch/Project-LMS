@@ -39,12 +39,7 @@ router.post(
 
 // GET /api/courses/:courseId/lessons
 // Public
-router.get(
-  "/courses/:courseId/lessons",
-  authMiddleware,
-  requireCourseEnrollment,
-  getLessonsController,
-);
+router.get("/courses/:courseId/lessons", getLessonsController);
 
 // ========================================
 // LESSON
