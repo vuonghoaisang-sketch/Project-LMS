@@ -11,8 +11,10 @@ import { Course } from '@/types/course';
 import { useAuth } from '@/context/AuthContext';
 
 import LessonList from '@/components/lesson/LessonList';
+import CourseProgress from '@/components/course/CourseProgress';
 import Loading from '@/components/ui/Loading';
 import ErrorState from '@/components/ui/ErrorState';
+import EmptyState from '@/components/ui/EmptyState';
 
 import { getErrorMessage } from '@/utils/error';
 
@@ -149,6 +151,10 @@ export default function CourseDetailPage({ params }: Props) {
     );
   }
 
+  const canManageCourse =
+    user?.role === 'admin' ||
+    (user?.role === 'instructor' && course.created_by === user.id);
+
   return (
     <div className="max-w-5xl">
       <Link
@@ -191,7 +197,11 @@ export default function CourseDetailPage({ params }: Props) {
           </div>
         )}
 
-        {(user?.role === 'admin' || user?.role === 'instructor') && (
+        {user?.role === 'student' && enrolled && (
+          <CourseProgress courseId={course.id} />
+        )}
+
+        {canManageCourse && (
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href={`/courses/${course.id}/edit`}
@@ -210,9 +220,36 @@ export default function CourseDetailPage({ params }: Props) {
         )}
       </div>
 
-      <LessonList courseId={course.id!} />
+      {canManageCourse || enrolled ? (
+        <LessonList
+          courseId={course.id}
+          canManage={canManageCourse}
+        />
+      ) : (
+        <div className="mt-10">
+          <h2 className="mb-5 text-2xl font-bold">Lessons</h2>
+          <EmptyState
+            title={user ? 'Enroll to unlock lessons' : 'Sign in to view lessons'}
+            message={
+              user
+                ? 'Enroll in this course to access its lessons.'
+                : 'Sign in to your student account and enroll to access course lessons.'
+            }
+            action={
+              !user ? (
+                <Link
+                  href="/login"
+                  className="inline-flex rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700"
+                >
+                  Sign in
+                </Link>
+              ) : undefined
+            }
+          />
+        </div>
+      )}
 
-      {(user?.role === 'admin' || user?.role === 'instructor') && (
+      {canManageCourse && (
         <Link
           href={`/courses/${course.id}/lessons/create`}
           className="mt-5 inline-block rounded-lg bg-green-600 px-5 py-2.5 text-white transition hover:bg-green-700"

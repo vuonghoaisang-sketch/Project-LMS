@@ -10,16 +10,26 @@ import userRoute from "./routes/user.route";
 
 import { notFoundHandler } from "./middlewares/not-found.middleware";
 import { errorHandler } from "./middlewares/error.middleware";
-
+const allowedOrigins = (process.env.FRONTEND_ORIGINS ?? "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+//Tạo server Express để nhận request.
 const app = express();
-
+//cors: Cho phép Frontend Next.js ở port 3000 gọi Backend port 5000.
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error("Origin is not allowed by CORS"));
+    },
   }),
 );
-
-app.use(express.json());
+//Cho phép đọc JSON
+app.use(express.json({ limit: "1mb" }));
 
 app.use("/api/auth", authRoute);
 app.use("/api", testRoute);

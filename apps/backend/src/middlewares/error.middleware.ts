@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+
 import AppError from "../utils/AppError";
 
 export function errorHandler(
@@ -7,7 +8,28 @@ export function errorHandler(
   res: Response,
   next: NextFunction,
 ) {
-  console.error(error);
+  const safeError = error as { code?: string; type?: string; message?: string };
+
+  console.error("API request error", {
+    method: req.method,
+    path: req.path,
+    code: safeError?.code,
+    type: safeError?.type,
+  });
+
+  if (safeError?.type === "entity.parse.failed") {
+    return res.status(400).json({
+      success: false,
+      message: "Request body must contain valid JSON",
+    });
+  }
+
+  if (safeError?.type === "entity.too.large") {
+    return res.status(413).json({
+      success: false,
+      message: "Request body is too large",
+    });
+  }
 
   if (error instanceof AppError) {
     return res.status(error.statusCode).json({

@@ -15,7 +15,7 @@ export default function DashboardLayout({
   const router = useRouter();
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [loading, user, router]);
   if (loading) {
@@ -31,9 +31,9 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="flex">
+      <div className="flex min-h-[calc(100vh-4rem)] flex-col md:flex-row">
         <Sidebar />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );

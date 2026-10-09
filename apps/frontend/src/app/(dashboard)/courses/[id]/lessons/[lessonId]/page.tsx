@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 
 import { getLessonById } from '@/services/lesson.service';
 import { checkEnrollment } from '@/services/enrollment.service';
+import {
+  completeLesson,
+  getCourseProgress,
+} from '@/services/learning-progress.service';
 
 import { Lesson } from '@/types/lesson';
 
@@ -13,6 +17,7 @@ import { useAuth } from '@/context/AuthContext';
 import Loading from '@/components/ui/Loading';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorState from '@/components/ui/ErrorState';
+import { getErrorMessage } from '@/utils/error';
 
 interface Props {
   params: Promise<{
@@ -34,6 +39,8 @@ export default function LessonDetailPage({ params }: Props) {
   const [error, setError] = useState('');
 
   const [courseId, setCourseId] = useState<number | null>(null);
+  const [completed, setCompleted] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -74,13 +81,14 @@ export default function LessonDetailPage({ params }: Props) {
         const data = await getLessonById(lessonIdNumber);
 
         setLesson(data);
-      } catch (error: any) {
-        console.error(error);
 
-        setError(
-          error?.response?.data?.message ||
-            'Something went wrong while loading the lesson.',
-        );
+        if (user?.role === 'student') {
+          const progress = await getCourseProgress(courseIdNumber);
+          setCompleted(progress.completedLessonIds.includes(lessonIdNumber));
+        }
+      } catch (error) {
+        console.error(error);
+        setError(getErrorMessage(error));
       } finally {
         setLoading(false);
       }
@@ -184,6 +192,21 @@ export default function LessonDetailPage({ params }: Props) {
 
   const videoUrl = getYoutubeEmbedUrl(lesson.video_url);
 
+  async function handleCompleteLesson() {
+    if (!lesson) return;
+
+    try {
+      setCompleting(true);
+      await completeLesson(lesson.id);
+      setCompleted(true);
+    } catch (cause) {
+      console.error(cause);
+      setError(getErrorMessage(cause));
+    } finally {
+      setCompleting(false);
+    }
+  }
+
   return (
     <div className="max-w-5xl">
       <button
@@ -228,6 +251,23 @@ export default function LessonDetailPage({ params }: Props) {
           {lesson.description || 'No description available.'}
         </p>
       </div>
+
+      {user?.role === 'student' && (
+        <div className="mt-8">
+          <button
+            type="button"
+            onClick={handleCompleteLesson}
+            disabled={completed || completing}
+            className="rounded-lg bg-green-700 px-5 py-2.5 font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {completed
+              ? 'Lesson completed'
+              : completing
+                ? 'Saving progress...'
+                : 'Mark as complete'}
+          </button>
+        </div>
+      )}
 
       {(user?.role === 'admin' || user?.role === 'instructor') && (
         <div className="mt-8 flex gap-3">

@@ -25,12 +25,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+    const handleUnauthorized = () => setUser(null);
+    window.addEventListener('lms:unauthorized', handleUnauthorized);
+
     async function getCurrentUser() {
       try {
         const token = localStorage.getItem('token');
 
         if (!token) {
-          setLoading(false);
+          if (active) setLoading(false);
           return;
         }
 
@@ -38,21 +42,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const currentUser = res.data.user;
 
+        if (!active) return;
         setUser(currentUser);
         localStorage.setItem('user', JSON.stringify(currentUser));
       } catch (error) {
         console.error('Get current user failed:', error);
 
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-
-        setUser(null);
+        if (active) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
 
     getCurrentUser();
+    return () => {
+      active = false;
+      window.removeEventListener('lms:unauthorized', handleUnauthorized);
+    };
   }, []);
 
   function loginUser(user: User, token: string) {

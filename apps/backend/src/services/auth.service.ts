@@ -1,8 +1,9 @@
 import bcrypt from "bcrypt";
 import { createUser } from "../models/user.model";
 import jwt from "jsonwebtoken";
-import { findUserByEmail, findUserById } from "../models/user.model";
+import { findUserByEmail } from "../models/user.model";
 import { JWT_SECRET } from "../utils/jwt";
+import AppError from "../utils/AppError";
 
 interface RegisterData {
   name: string;
@@ -11,27 +12,45 @@ interface RegisterData {
 }
 
 export async function registerUser(data: RegisterData) {
+  const email = data.email.trim().toLowerCase();
+  const existingUser = await findUserByEmail(email);
+
+  if (existingUser) {
+    throw new AppError("An account with this email already exists", 409);
+  }
+
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
-  const user = await createUser({
-    name: data.name,
-    email: data.email,
+  await createUser({
+    name: data.name.trim(),
+    email,
     password: hashedPassword,
   });
 
-  return user;
-}
-export async function loginUser(email: string, password: string) {
   const user = await findUserByEmail(email);
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("Could not create the account", 500);
+  }
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+}
+export async function loginUser(email: string, password: string) {
+  const user = await findUserByEmail(email.trim().toLowerCase());
+
+  if (!user) {
+    throw new AppError("Invalid email or password", 401);
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
-    throw new Error("Wrong password");
+    throw new AppError("Invalid email or password", 401);
   }
 
   const token = jwt.sign(
@@ -42,7 +61,7 @@ export async function loginUser(email: string, password: string) {
     },
     JWT_SECRET,
     {
-      expiresIn: "7d",
+      expiresIn: "1d",
     },
   );
 
@@ -54,19 +73,5 @@ export async function loginUser(email: string, password: string) {
       email: user.email,
       role: user.role,
     },
-  };
-}
-export async function getUserById(id: number) {
-  const user = await findUserById(id);
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
   };
 }

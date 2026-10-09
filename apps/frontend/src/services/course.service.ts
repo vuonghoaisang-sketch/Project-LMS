@@ -2,12 +2,13 @@ import api from '@/lib/axios';
 
 export async function getCourses() {
   const response = await api.get('/courses');
-  return response.data;
+  return response.data.courses;
 }
 
 export async function createCourse(data: {
   title: string;
   description: string;
+  category: string;
   price: number;
 }) {
   const token = localStorage.getItem('token');
@@ -21,7 +22,7 @@ export async function createCourse(data: {
 }
 export async function getCourseById(id: number) {
   const response = await api.get(`/courses/${id}`);
-  return response.data;
+  return response.data.course;
 }
 
 export async function updateCourse(
@@ -29,6 +30,7 @@ export async function updateCourse(
   data: {
     title: string;
     description: string;
+    category: string;
     price: number;
   },
 ) {

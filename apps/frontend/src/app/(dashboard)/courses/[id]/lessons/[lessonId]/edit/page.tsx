@@ -11,6 +11,7 @@ import FormError from '@/components/ui/FormError';
 import RoleGuard from '@/components/auth/RoleGuard';
 import Loading from '@/components/ui/Loading';
 import ErrorState from '@/components/ui/ErrorState';
+import { getErrorMessage } from '@/utils/error';
 
 interface Props {
   params: Promise<{
@@ -97,12 +98,9 @@ export default function EditLessonPage({ params }: Props) {
       const { id } = await params;
 
       router.push(`/courses/${id}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
-
-      setSubmitError(
-        error?.response?.data?.message || 'Failed to update lesson',
-      );
+      setSubmitError(getErrorMessage(error));
     } finally {
       setLoading(false);
     }

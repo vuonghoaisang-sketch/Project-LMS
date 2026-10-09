@@ -1,59 +1,54 @@
 import { Request, Response } from "express";
-import { registerUser } from "../services/auth.service";
-import { loginUser } from "../services/auth.service";
-import { getUserById } from "../services/auth.service";
+
+import { loginUser, registerUser } from "../services/auth.service";
+import {
+  validateLoginInput,
+  validateRegisterInput,
+} from "../validators/auth.validator";
+
 export async function register(req: Request, res: Response) {
-  try {
-    const { name, email, password } = req.body;
+  const errors = validateRegisterInput(req.body);
 
-    const user = await registerUser({
-      name,
-      email,
-      password,
-    });
-
-    return res.status(201).json({
-      message: "Register successfully",
-      user,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Register failed",
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors,
     });
   }
+
+  const user = await registerUser(req.body);
+
+  return res.status(201).json({
+    success: true,
+    message: "Register successfully",
+    user,
+  });
 }
+
 export async function login(req: Request, res: Response) {
-  try {
-    const { email, password } = req.body;
+  const errors = validateLoginInput(req.body);
 
-    const result = await loginUser(email, password);
-
-    return res.status(200).json({
-      message: "Login successfully",
-      ...result,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(401).json({
-      message: error instanceof Error ? error.message : "Login failed",
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors,
     });
   }
+
+  const result = await loginUser(req.body.email, req.body.password);
+
+  return res.status(200).json({
+    success: true,
+    message: "Login successfully",
+    ...result,
+  });
 }
+
 export async function getMe(req: Request, res: Response) {
-  try {
-    const userId = (req as any).user.id;
-
-    const user = await getUserById(userId);
-
-    return res.status(200).json({
-      user,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: "Get user failed",
-    });
-  }
+  return res.status(200).json({
+    success: true,
+    user: (req as any).user,
+  });
 }

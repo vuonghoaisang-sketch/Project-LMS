@@ -5,6 +5,8 @@ export interface Course {
 
   description: string;
 
+  category: string;
+
   thumbnail: string | null;
 
   price: string;
@@ -14,4 +16,6 @@ export interface Course {
   instructor_id: number;
 
   instructor_name: string;
+
+  created_by?: number | null;
 }

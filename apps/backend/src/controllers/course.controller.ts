@@ -11,102 +11,108 @@ import {
 import { validateCourseInput } from "../validators/course.validator";
 
 export async function createCourseController(req: Request, res: Response) {
-  try {
-    const errors = validateCourseInput(req.body);
+  const errors = validateCourseInput(req.body);
 
-    if (Object.keys(errors).length > 0) {
-      return res.status(400).json({
-        message: "Validation failed",
-        errors,
-      });
-    }
-
-    const user = (req as any).user;
-
-    const course = await createNewCourse({
-      ...req.body,
-      created_by: user.id,
-    });
-
-    return res.status(201).json({
-      message: "Create course successfully",
-      course,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Create course failed",
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors,
     });
   }
+
+  const user = (req as any).user;
+
+  const course = await createNewCourse({
+    title: req.body.title.trim(),
+    description: req.body.description.trim(),
+    category: typeof req.body.category === "string" ? req.body.category.trim() : "General",
+    price: Number(req.body.price),
+    created_by: user.id,
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: "Create course successfully",
+    course,
+  });
 }
 
 export async function getCoursesController(req: Request, res: Response) {
-  try {
-    const courses = await getAllCourses();
+  const courses = await getAllCourses();
 
-    return res.json(courses);
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Get courses failed",
-    });
-  }
+  return res.json({
+    success: true,
+    courses,
+  });
 }
 
 export async function getCourseDetailController(req: Request, res: Response) {
-  try {
-    const id = Number(req.params.id);
+  const id = Number(req.params.id);
 
-    const course = await getCourseById(id);
-
-    return res.json(course);
-  } catch (error) {
-    return res.status(404).json({
-      message: error instanceof Error ? error.message : "Course not found",
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid course id",
     });
   }
+
+  const course = await getCourseById(id);
+
+  return res.json({
+    success: true,
+    course,
+  });
 }
 
 export async function updateCourseController(req: Request, res: Response) {
-  try {
-    const errors = validateCourseInput(req.body);
+  const errors = validateCourseInput(req.body);
 
-    if (Object.keys(errors).length > 0) {
-      return res.status(400).json({
-        message: "Validation failed",
-        errors,
-      });
-    }
-
-    const id = Number(req.params.id);
-
-    const course = await updateCourseService(id, req.body);
-
-    return res.json({
-      message: "Update course successfully",
-      course,
-    });
-  } catch (error) {
+  if (Object.keys(errors).length > 0) {
     return res.status(400).json({
-      message: error instanceof Error ? error.message : "Update failed",
+      success: false,
+      message: "Validation failed",
+      errors,
     });
   }
+
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid course id",
+    });
+  }
+
+  const course = await updateCourseService(id, {
+    title: req.body.title.trim(),
+    description: req.body.description.trim(),
+    category: typeof req.body.category === "string" ? req.body.category.trim() : "General",
+    price: Number(req.body.price),
+  });
+
+  return res.json({
+    success: true,
+    message: "Update course successfully",
+    course,
+  });
 }
 
 export async function deleteCourseController(req: Request, res: Response) {
-  try {
-    const id = Number(req.params.id);
+  const id = Number(req.params.id);
 
-    await deleteCourseService(id);
-
-    return res.json({
-      message: "Delete course successfully",
-    });
-  } catch (error) {
+  if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({
-      message: error instanceof Error ? error.message : "Delete failed",
+      success: false,
+      message: "Invalid course id",
     });
   }
+
+  await deleteCourseService(id);
+
+  return res.json({
+    success: true,
+    message: "Delete course successfully",
+  });
 }

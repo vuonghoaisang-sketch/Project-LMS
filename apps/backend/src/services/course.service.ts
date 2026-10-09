@@ -2,6 +2,7 @@ import { Course, createCourse, getCourses } from "../models/course.model";
 import { findCourseById } from "../models/course.model";
 import { updateCourse } from "../models/course.model";
 import { deleteCourse } from "../models/course.model";
+import AppError from "../utils/AppError";
 
 export async function createNewCourse(data: any) {
   const course = await createCourse(data);
@@ -16,27 +17,32 @@ export async function getAllCourses() {
 
 export async function getCourseById(id: number) {
   const course = await findCourseById(id);
+
   if (!course) {
-    throw new Error("Course not found");
+    throw new AppError("Course not found", 404);
   }
+
   return course;
 }
 
-export async function updateCourseService(id: number, data: Course) {
-  const existingCourse = await findCourseById(id);
+export async function updateCourseService(id: number, data: any) {
+  const course = await findCourseById(id);
 
-  if (!existingCourse) {
-    throw new Error("Course not found");
+  if (!course) {
+    throw new AppError("Course not found", 404);
   }
-  await updateCourse(id, data);
-  return await findCourseById(id);
+
+  return updateCourse(id, data);
 }
 
 export async function deleteCourseService(id: number) {
   const course = await findCourseById(id);
+
   if (!course) {
-    throw new Error("Course not found");
+    throw new AppError("Course not found", 404);
   }
+
   await deleteCourse(id);
+
   return true;
 }

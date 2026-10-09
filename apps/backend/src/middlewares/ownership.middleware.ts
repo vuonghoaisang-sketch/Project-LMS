@@ -23,8 +23,9 @@ export async function requireCourseOwner(
 
     const courseId = Number(req.params.id || req.params.courseId);
 
-    if (!courseId || Number.isNaN(courseId)) {
+    if (!Number.isInteger(courseId) || courseId <= 0) {
       return res.status(400).json({
+        success: false,
         message: "Invalid course id",
       });
     }
@@ -45,11 +46,7 @@ export async function requireCourseOwner(
 
     next();
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Ownership check failed",
-    });
+    return next(error);
   }
 }
 
@@ -74,8 +71,9 @@ export async function requireLessonOwner(
 
     const lessonId = Number(req.params.id);
 
-    if (!lessonId || Number.isNaN(lessonId)) {
+    if (!Number.isInteger(lessonId) || lessonId <= 0) {
       return res.status(400).json({
+        success: false,
         message: "Invalid lesson id",
       });
     }
@@ -104,10 +102,6 @@ export async function requireLessonOwner(
 
     next();
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Ownership check failed",
-    });
+    return next(error);
   }
 }

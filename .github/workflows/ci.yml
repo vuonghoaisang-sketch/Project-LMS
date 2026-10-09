@@ -1,0 +1,35 @@
+name: LMS CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/backend/package-lock.json
+      - run: npm ci --prefix apps/backend
+      - run: npm run typecheck --prefix apps/backend
+      - run: npm test --prefix apps/backend
+      - run: npm run build --prefix apps/backend
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/frontend/package-lock.json
+      - run: npm ci --prefix apps/frontend
+      - run: npm run lint --prefix apps/frontend
+      - run: npm run typecheck --prefix apps/frontend
+      - run: npm run build --prefix apps/frontend

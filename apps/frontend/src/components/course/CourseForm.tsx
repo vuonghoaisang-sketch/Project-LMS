@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { createCourse } from '@/services/course.service';
 import { courseSchema } from '@/schemas/course.schema';
 import FormError from '@/components/ui/FormError';
+import { getErrorMessage } from '@/utils/error';
 
 export default function CourseForm() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('General');
   const [price, setPrice] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -23,6 +25,7 @@ export default function CourseForm() {
     const result = courseSchema.safeParse({
       title,
       description,
+      category,
       price: Number(price),
     });
 
@@ -50,13 +53,11 @@ export default function CourseForm() {
 
       setTitle('');
       setDescription('');
+      setCategory('General');
       setPrice('');
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
-
-      setSubmitError(
-        error?.response?.data?.message || 'Failed to create course',
-      );
+      setSubmitError(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -99,6 +100,21 @@ export default function CourseForm() {
         />
 
         <FormError message={errors.description} />
+      </div>
+
+      <div>
+        <label className="mb-2 block font-medium" htmlFor="course-category">
+          Category
+        </label>
+        <input
+          id="course-category"
+          className="w-full rounded-lg border p-3"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          placeholder="Programming"
+          disabled={loading}
+        />
+        <FormError message={errors.category} />
       </div>
 
       <div>

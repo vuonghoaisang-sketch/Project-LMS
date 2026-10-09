@@ -4,6 +4,7 @@ export interface Course {
   id?: number;
   title: string;
   description?: string | null;
+  category?: string;
   thumbnail?: string | null;
   price?: number;
   created_by?: number | null;
@@ -12,6 +13,7 @@ export interface Course {
 export async function createCourse(course: {
   title: string;
   description: string;
+  category?: string;
   price: number;
   created_by: number;
 }) {
@@ -21,12 +23,13 @@ export async function createCourse(course: {
     (
       title,
       description,
+      category,
       price,
       created_by
     )
-    VALUES (?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?)
     `,
-    [course.title, course.description, course.price, course.created_by],
+    [course.title, course.description, course.category ?? "General", course.price, course.created_by],
   );
 
   const insertId = (result as any).insertId;
@@ -37,13 +40,14 @@ export async function createCourse(course: {
       c.id,
       c.title,
       c.description,
+      c.category,
       c.thumbnail,
       c.price,
       c.created_by,
       c.created_at,
       u.name AS instructor_name
     FROM courses c
-    JOIN users u ON c.created_by = u.id
+    LEFT JOIN users u ON c.created_by = u.id
     WHERE c.id = ?
     `,
     [insertId],
@@ -59,6 +63,7 @@ export async function getCourses() {
       courses.id,
       courses.title,
       courses.description,
+      courses.category,
       courses.thumbnail,
       courses.price,
       courses.created_at,
@@ -81,7 +86,7 @@ export async function findCourseById(id: number) {
       c.*,
       u.name AS instructor_name
     FROM courses c
-    JOIN users u
+    LEFT JOIN users u
       ON c.created_by = u.id
     WHERE c.id = ?
     `,
@@ -100,6 +105,7 @@ export async function updateCourse(id: number, course: Course) {
     SET
       title = ?,
       description = ?,
+      category = ?,
       thumbnail = ?,
       price = ?
     WHERE id = ?
@@ -107,6 +113,7 @@ export async function updateCourse(id: number, course: Course) {
     [
       course.title,
       course.description ?? null,
+      course.category ?? "General",
       course.thumbnail ?? null,
       course.price ?? 0,
       id,

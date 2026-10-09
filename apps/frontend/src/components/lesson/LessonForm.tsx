@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { lessonSchema } from '@/schemas/lesson.schema';
 import FormError from '@/components/ui/FormError';
+import { getErrorMessage } from '@/utils/error';
 
 export default function LessonForm({ courseId }: { courseId: number }) {
   const router = useRouter();
@@ -21,7 +22,6 @@ export default function LessonForm({ courseId }: { courseId: number }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     setErrors({});
     setSubmitError('');
 
@@ -55,12 +55,9 @@ export default function LessonForm({ courseId }: { courseId: number }) {
       alert('Create lesson successfully');
 
       router.push(`/courses/${courseId}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
-
-      setSubmitError(
-        error?.response?.data?.message || 'Failed to create lesson',
-      );
+      setSubmitError(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
