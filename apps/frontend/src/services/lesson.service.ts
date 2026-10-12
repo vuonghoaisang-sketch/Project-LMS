@@ -21,14 +21,7 @@ export async function createLesson(
     position: number;
   },
 ) {
-  const token = localStorage.getItem('token');
-
-  const response = await api.post(`/courses/${courseId}/lessons`, data, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
+  const response = await api.post(`/courses/${courseId}/lessons`, data);
   return response.data;
 }
 
@@ -41,25 +34,11 @@ export async function updateLesson(
     position: number;
   },
 ) {
-  const token = localStorage.getItem('token');
-
-  const response = await api.put(`/lessons/${id}`, data, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
+  const response = await api.put(`/lessons/${id}`, data);
   return response.data;
 }
 
 export async function deleteLesson(id: number) {
-  const token = localStorage.getItem('token');
-
-  const response = await api.delete(`/lessons/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
+  const response = await api.delete(`/lessons/${id}`);
   return response.data;
 }

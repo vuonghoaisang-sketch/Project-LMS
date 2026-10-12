@@ -10,13 +10,17 @@ import userRoute from "./routes/user.route";
 
 import { notFoundHandler } from "./middlewares/not-found.middleware";
 import { errorHandler } from "./middlewares/error.middleware";
-const allowedOrigins = (process.env.FRONTEND_ORIGINS ?? "http://localhost:3000")
+const defaultOrigins = ["http://localhost:3000", "http://127.0.0.1:3000"];
+const envOrigins = (process.env.FRONTEND_ORIGINS ?? "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
-//Tạo server Express để nhận request.
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
+
+// Tạo server Express để nhận request.
 const app = express();
-//cors: Cho phép Frontend Next.js ở port 3000 gọi Backend port 5000.
+
+// cors: Cho phép Frontend Next.js gọi Backend API
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -24,8 +28,9 @@ app.use(
         callback(null, true);
         return;
       }
-      callback(new Error("Origin is not allowed by CORS"));
+      callback(null, false);
     },
+    credentials: true,
   }),
 );
 //Cho phép đọc JSON
