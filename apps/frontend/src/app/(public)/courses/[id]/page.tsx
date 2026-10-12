@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { getCourseById, deleteCourse } from '@/services/course.service';
 import { checkEnrollment, enrollCourse } from '@/services/enrollment.service';
@@ -26,6 +26,13 @@ interface Props {
 
 export default function CourseDetailPage({ params }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const fromMyCourses = searchParams.get('from') === 'my-courses';
+
+  const backUrl = fromMyCourses ? '/my-courses' : '/courses';
+
+  const backText = fromMyCourses ? '← Back to My Courses' : '← Back to Courses';
 
   const { user, loading: authLoading } = useAuth();
 
@@ -127,10 +134,10 @@ export default function CourseDetailPage({ params }: Props) {
         <ErrorState message={error} />
 
         <Link
-          href="/courses"
+          href={backUrl}
           className="mt-5 inline-block rounded bg-gray-800 px-4 py-2 text-white hover:bg-gray-900"
         >
-          Back to Courses
+          {backText}
         </Link>
       </div>
     );
@@ -142,10 +149,10 @@ export default function CourseDetailPage({ params }: Props) {
         <ErrorState message="Course not found." />
 
         <Link
-          href="/courses"
+          href={backUrl}
           className="mt-5 inline-block rounded bg-gray-800 px-4 py-2 text-white hover:bg-gray-900"
         >
-          Back to Courses
+          {backText}
         </Link>
       </div>
     );
@@ -158,12 +165,11 @@ export default function CourseDetailPage({ params }: Props) {
   return (
     <div className="max-w-5xl">
       <Link
-        href="/courses"
+        href={backUrl}
         className="mb-6 inline-block rounded border px-4 py-2 hover:bg-gray-50"
       >
-        ← Back to Courses
+        {backText}
       </Link>
-
       <div className="rounded-xl border bg-white p-6 shadow-sm">
         <h1 className="text-3xl font-bold">{course.title}</h1>
 
@@ -219,17 +225,15 @@ export default function CourseDetailPage({ params }: Props) {
           </div>
         )}
       </div>
-
       {canManageCourse || enrolled ? (
-        <LessonList
-          courseId={course.id}
-          canManage={canManageCourse}
-        />
+        <LessonList courseId={course.id} canManage={canManageCourse} />
       ) : (
         <div className="mt-10">
           <h2 className="mb-5 text-2xl font-bold">Lessons</h2>
           <EmptyState
-            title={user ? 'Enroll to unlock lessons' : 'Sign in to view lessons'}
+            title={
+              user ? 'Enroll to unlock lessons' : 'Sign in to view lessons'
+            }
             message={
               user
                 ? 'Enroll in this course to access its lessons.'
@@ -248,7 +252,6 @@ export default function CourseDetailPage({ params }: Props) {
           />
         </div>
       )}
-
       {canManageCourse && (
         <Link
           href={`/courses/${course.id}/lessons/create`}

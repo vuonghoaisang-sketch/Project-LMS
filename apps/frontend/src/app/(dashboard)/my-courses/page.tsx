@@ -58,15 +58,12 @@ export default function MyCoursesPage() {
         {courses.map((course) => (
           <div key={course.id} className="rounded-xl border p-5">
             <h2 className="text-xl font-bold">{course.title}</h2>
-
             <p className="mt-2 text-gray-600">{course.description}</p>
-
             <p className="mt-3 text-sm text-gray-500">
               Enrolled: {new Date(course.enrolled_at).toLocaleDateString()}
             </p>
-
             <Link
-              href={`/courses/${course.course_id}`}
+              href={`/courses/${course.course_id}?from=my-courses`}
               className="mt-5 inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
               Go to Course
