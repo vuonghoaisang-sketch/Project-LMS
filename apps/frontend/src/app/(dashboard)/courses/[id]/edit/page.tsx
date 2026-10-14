@@ -12,6 +12,7 @@ import RoleGuard from '@/components/auth/RoleGuard';
 import Loading from '@/components/ui/Loading';
 import ErrorState from '@/components/ui/ErrorState';
 import FormError from '@/components/ui/FormError';
+import FileUpload from '@/components/ui/FileUpload';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -23,6 +24,7 @@ export default function EditCoursePage({ params }: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('General');
+  const [thumbnail, setThumbnail] = useState('');
   const [price, setPrice] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,9 +45,9 @@ export default function EditCoursePage({ params }: Props) {
         setTitle(course.title ?? '');
         setDescription(course.description ?? '');
         setCategory(course.category ?? 'General');
+        setThumbnail(course.thumbnail ?? '');
         setPrice(Number(course.price ?? 0));
       } catch (cause) {
-        console.error(cause);
         if (active) setError(getErrorMessage(cause));
       } finally {
         if (active) setLoading(false);
@@ -63,7 +65,13 @@ export default function EditCoursePage({ params }: Props) {
     setError('');
     setFieldErrors({});
 
-    const result = courseSchema.safeParse({ title, description, category, price });
+    const result = courseSchema.safeParse({
+      title,
+      description,
+      category,
+      thumbnail: thumbnail || null,
+      price,
+    });
     if (!result.success) {
       const nextErrors: Record<string, string> = {};
       result.error.issues.forEach((issue) => {
@@ -80,7 +88,6 @@ export default function EditCoursePage({ params }: Props) {
       await updateCourse(Number(id), result.data);
       router.push(`/courses/${id}`);
     } catch (cause) {
-      console.error(cause);
       setError(getErrorMessage(cause));
     } finally {
       setSaving(false);
@@ -100,31 +107,109 @@ export default function EditCoursePage({ params }: Props) {
 
   return (
     <RoleGuard allowedRoles={['admin', 'instructor']}>
-      <div className="max-w-xl">
-        <h1 className="mb-6 text-3xl font-bold">Edit Course</h1>
-        {error && <ErrorState message={error} />}
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+      <div className="max-w-2xl space-y-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+          Edit Course
+        </h1>
+
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm"
+        >
+          {error && <ErrorState message={error} />}
+
           <div>
-            <label htmlFor="course-title" className="mb-1 block text-sm font-medium">Course title</label>
-            <input id="course-title" className="w-full rounded-lg border p-3" value={title} onChange={(event) => setTitle(event.target.value)} disabled={saving} />
+            <label
+              htmlFor="course-title"
+              className="mb-2 block text-sm font-semibold text-slate-800"
+            >
+              Course Title
+            </label>
+            <input
+              id="course-title"
+              className="w-full rounded-xl border border-slate-300 p-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              disabled={saving}
+            />
             <FormError message={fieldErrors.title} />
           </div>
+
           <div>
-            <label htmlFor="course-description" className="mb-1 block text-sm font-medium">Description</label>
-            <textarea id="course-description" className="w-full rounded-lg border p-3" value={description} onChange={(event) => setDescription(event.target.value)} rows={5} disabled={saving} />
+            <label
+              htmlFor="course-description"
+              className="mb-2 block text-sm font-semibold text-slate-800"
+            >
+              Description
+            </label>
+            <textarea
+              id="course-description"
+              className="h-32 w-full rounded-xl border border-slate-300 p-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              rows={5}
+              disabled={saving}
+            />
             <FormError message={fieldErrors.description} />
           </div>
+
+          {/* Thumbnail upload */}
           <div>
-            <label htmlFor="course-category" className="mb-1 block text-sm font-medium">Category</label>
-            <input id="course-category" className="w-full rounded-lg border p-3" value={category} onChange={(event) => setCategory(event.target.value)} disabled={saving} />
-            <FormError message={fieldErrors.category} />
+            <label className="mb-2 block text-sm font-semibold text-slate-800">
+              Course Thumbnail
+            </label>
+            <FileUpload
+              type="image"
+              value={thumbnail}
+              onChange={(url) => setThumbnail(url)}
+              placeholder="Change Course Thumbnail"
+            />
           </div>
-          <div>
-            <label htmlFor="course-price" className="mb-1 block text-sm font-medium">Price</label>
-            <input id="course-price" type="number" min="0" className="w-full rounded-lg border p-3" value={price} onChange={(event) => setPrice(Number(event.target.value))} disabled={saving} />
-            <FormError message={fieldErrors.price} />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="course-category"
+                className="mb-2 block text-sm font-semibold text-slate-800"
+              >
+                Category
+              </label>
+              <input
+                id="course-category"
+                className="w-full rounded-xl border border-slate-300 p-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+                disabled={saving}
+              />
+              <FormError message={fieldErrors.category} />
+            </div>
+
+            <div>
+              <label
+                htmlFor="course-price"
+                className="mb-2 block text-sm font-semibold text-slate-800"
+              >
+                Price (USD)
+              </label>
+              <input
+                id="course-price"
+                type="number"
+                min="0"
+                step="0.01"
+                className="w-full rounded-xl border border-slate-300 p-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={price}
+                onChange={(event) => setPrice(Number(event.target.value))}
+                disabled={saving}
+              />
+              <FormError message={fieldErrors.price} />
+            </div>
           </div>
-          <button type="submit" disabled={saving} className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full sm:w-auto rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow hover:bg-blue-700 transition disabled:cursor-not-allowed disabled:opacity-60"
+          >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </form>

@@ -41,7 +41,6 @@ export default function LoginForm() {
 
       router.push('/');
     } catch (err) {
-      console.error(err);
       setError(getErrorMessage(err));
     }
   }

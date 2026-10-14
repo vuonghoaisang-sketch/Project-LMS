@@ -6,6 +6,9 @@ import {
   getLessonController,
   updateLessonController,
   deleteLessonController,
+  addAttachmentController,
+  deleteAttachmentController,
+  getAttachmentsController,
 } from "../controllers/lesson.controller";
 
 import { authMiddleware } from "../middlewares/auth.middleware";
@@ -25,6 +28,7 @@ import {
 
 const router = Router();
 
+// Student course progress
 router.get(
   "/courses/:courseId/progress",
   authMiddleware,
@@ -33,6 +37,7 @@ router.get(
   getCourseProgressController,
 );
 
+// Student lesson completion
 router.post(
   "/lessons/:id/complete",
   authMiddleware,
@@ -41,6 +46,7 @@ router.post(
   completeLessonController,
 );
 
+// Course lessons CRUD
 router.post(
   "/courses/:courseId/lessons",
   authMiddleware,
@@ -77,6 +83,29 @@ router.delete(
   requireRole(["admin", "instructor"]),
   requireLessonOwner,
   deleteLessonController,
+);
+
+// Lesson attachments
+router.get(
+  "/lessons/:id/attachments",
+  authMiddleware,
+  requireLessonEnrollment,
+  getAttachmentsController,
+);
+
+router.post(
+  "/lessons/:id/attachments",
+  authMiddleware,
+  requireRole(["admin", "instructor"]),
+  requireLessonOwner,
+  addAttachmentController,
+);
+
+router.delete(
+  "/lessons/attachments/:attachmentId",
+  authMiddleware,
+  requireRole(["admin", "instructor"]),
+  deleteAttachmentController,
 );
 
 export default router;

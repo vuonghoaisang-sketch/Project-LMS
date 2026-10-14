@@ -4,8 +4,9 @@ export interface User {
   id?: number;
   name: string;
   email: string;
-  password: string;
+  password?: string;
   role?: string;
+  avatar?: string | null;
 }
 
 // =========================
@@ -20,11 +21,18 @@ export async function createUser(user: User) {
       name,
       email,
       password,
-      role
+      role,
+      avatar
     )
-    VALUES (?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?)
     `,
-    [user.name, user.email, user.password, user.role ?? "student"],
+    [
+      user.name,
+      user.email,
+      user.password ?? null,
+      user.role ?? "student",
+      user.avatar ?? null,
+    ],
   );
 
   return result;
@@ -37,7 +45,7 @@ export async function createUser(user: User) {
 export async function findUserByEmail(email: string) {
   const [rows] = await db.execute(
     `
-    SELECT *
+    SELECT id, name, email, password, role, avatar
     FROM users
     WHERE email = ?
     `,
@@ -58,7 +66,8 @@ export async function findUserById(id: number) {
       id,
       name,
       email,
-      role
+      role,
+      avatar
     FROM users
     WHERE id = ?
     `,
@@ -66,7 +75,6 @@ export async function findUserById(id: number) {
   );
 
   const users = rows as any[];
-
   return users[0];
 }
 
@@ -81,7 +89,8 @@ export async function getAllUsers() {
       id,
       name,
       email,
-      role
+      role,
+      avatar
     FROM users
     ORDER BY id DESC
     `,
@@ -102,6 +111,23 @@ export async function updateUserRole(id: number, role: string) {
     WHERE id = ?
     `,
     [role, id],
+  );
+
+  return result;
+}
+
+// =========================
+// UPDATE USER AVATAR
+// =========================
+
+export async function updateUserAvatar(id: number, avatarUrl: string) {
+  const [result] = await db.execute(
+    `
+    UPDATE users
+    SET avatar = ?
+    WHERE id = ?
+    `,
+    [avatarUrl, id],
   );
 
   return result;

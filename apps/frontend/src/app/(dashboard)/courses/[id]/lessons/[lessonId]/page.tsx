@@ -11,12 +11,12 @@ import {
 } from '@/services/learning-progress.service';
 
 import { Lesson } from '@/types/lesson';
-
 import { useAuth } from '@/context/AuthContext';
 
 import Loading from '@/components/ui/Loading';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorState from '@/components/ui/ErrorState';
+import VideoPlayer from '@/components/lesson/VideoPlayer';
 import { getErrorMessage } from '@/utils/error';
 
 interface Props {
@@ -86,9 +86,8 @@ export default function LessonDetailPage({ params }: Props) {
           const progress = await getCourseProgress(courseIdNumber);
           setCompleted(progress.completedLessonIds.includes(lessonIdNumber));
         }
-      } catch (error) {
-        console.error(error);
-        setError(getErrorMessage(error));
+      } catch (err) {
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -98,24 +97,24 @@ export default function LessonDetailPage({ params }: Props) {
   }, [params, user, authLoading]);
 
   if (authLoading) {
-    return <Loading text="Loading user..." fullScreen />;
+    return <Loading />;
   }
 
   if (loading) {
-    return <Loading text="Loading lesson..." fullScreen />;
+    return <Loading />;
   }
 
   if (error) {
     return (
       <ErrorState
-        title="Unable to load lesson"
-        description={error}
+        title="Could not load lesson"
+        message={error}
         action={
           <button
-            onClick={() => router.back()}
-            className="rounded bg-gray-800 px-4 py-2 text-white"
+            onClick={() => router.refresh()}
+            className="rounded bg-blue-600 px-4 py-2 text-white"
           >
-            Go Back
+            Retry
           </button>
         }
       />
@@ -124,13 +123,13 @@ export default function LessonDetailPage({ params }: Props) {
 
   if (!hasAccess) {
     return (
-      <div className="max-w-2xl rounded-xl border p-8">
-        <h1 className="text-2xl font-bold">
+      <div className="max-w-2xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <h1 className="text-2xl font-bold text-slate-900">
           You need to enroll in this course first.
         </h1>
 
-        <p className="mt-3 text-gray-600">
-          Please enroll in this course before watching its lessons.
+        <p className="mt-3 text-slate-600">
+          Please enroll in this course before accessing its lessons and learning materials.
         </p>
 
         <button
@@ -139,7 +138,7 @@ export default function LessonDetailPage({ params }: Props) {
               router.push(`/courses/${courseId}`);
             }
           }}
-          className="mt-6 rounded bg-green-600 px-5 py-2 text-white"
+          className="mt-6 rounded-xl bg-blue-600 px-6 py-2.5 font-semibold text-white shadow hover:bg-blue-700 transition"
         >
           Go to Course
         </button>
@@ -164,34 +163,6 @@ export default function LessonDetailPage({ params }: Props) {
     );
   }
 
-  function getYoutubeEmbedUrl(url: string | null) {
-    if (!url) return null;
-
-    try {
-      const parsedUrl = new URL(url);
-
-      let videoId = '';
-
-      if (parsedUrl.hostname.includes('youtube.com')) {
-        videoId = parsedUrl.searchParams.get('v') || '';
-      }
-
-      if (parsedUrl.hostname.includes('youtu.be')) {
-        videoId = parsedUrl.pathname.slice(1);
-      }
-
-      if (!videoId) {
-        return null;
-      }
-
-      return `https://www.youtube.com/embed/${videoId}`;
-    } catch {
-      return null;
-    }
-  }
-
-  const videoUrl = getYoutubeEmbedUrl(lesson.video_url);
-
   async function handleCompleteLesson() {
     if (!lesson) return;
 
@@ -200,7 +171,6 @@ export default function LessonDetailPage({ params }: Props) {
       await completeLesson(lesson.id);
       setCompleted(true);
     } catch (cause) {
-      console.error(cause);
       setError(getErrorMessage(cause));
     } finally {
       setCompleting(false);
@@ -208,76 +178,127 @@ export default function LessonDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-5xl">
+    <div className="max-w-5xl space-y-6">
       <button
         onClick={() => {
           if (courseId) {
             router.push(`/courses/${courseId}`);
           }
         }}
-        className="mb-6 rounded border px-4 py-2 hover:bg-gray-50"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-sm"
       >
         ← Back to Course
       </button>
 
-      <div className="mb-6">
-        <p className="text-sm text-gray-500">Lesson {lesson.position}</p>
-
-        <h1 className="mt-2 text-3xl font-bold">{lesson.title}</h1>
+      <div>
+        <span className="inline-block rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+          Lesson {lesson.position}
+        </span>
+        <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-slate-950">
+          {lesson.title}
+        </h1>
       </div>
 
-      {videoUrl ? (
-        <div className="overflow-hidden rounded-xl bg-black">
-          <div className="aspect-video">
-            <iframe
-              src={videoUrl}
-              title={lesson.title}
-              className="h-full w-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-xl border p-10 text-center">
-          <p className="text-gray-500">No video available</p>
-        </div>
-      )}
+      {/* Video Player */}
+      <VideoPlayer url={lesson.video_url} title={lesson.title} />
 
-      <div className="mt-8">
-        <h2 className="text-xl font-bold">Description</h2>
-
-        <p className="mt-3 whitespace-pre-line text-gray-600">
-          {lesson.description || 'No description available.'}
+      {/* Description */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-900">About this lesson</h2>
+        <p className="mt-3 whitespace-pre-line text-slate-600 leading-relaxed">
+          {lesson.description || 'No description provided.'}
         </p>
       </div>
 
+      {/* Attachments Section */}
+      {lesson.attachments && lesson.attachments.length > 0 && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+            <span>📎 Downloadable Materials</span>
+            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+              {lesson.attachments.length}
+            </span>
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {lesson.attachments.map((att) => (
+              <a
+                key={att.id}
+                href={att.file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+                className="flex items-center justify-between rounded-xl border border-slate-200 p-3 hover:border-blue-400 hover:bg-blue-50/50 transition group"
+              >
+                <div className="flex items-center gap-3 truncate">
+                  <div className="rounded-lg bg-blue-100 p-2 text-blue-700">
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="truncate text-left">
+                    <p className="truncate text-sm font-semibold text-slate-800 group-hover:text-blue-700">
+                      {att.name}
+                    </p>
+                    {att.file_size > 0 && (
+                      <p className="text-xs text-slate-400">
+                        {(att.file_size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
+                  Download ↓
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Completion Button for Student */}
       {user?.role === 'student' && (
-        <div className="mt-8">
+        <div className="pt-2">
           <button
             type="button"
             onClick={handleCompleteLesson}
             disabled={completed || completing}
-            className="rounded-lg bg-green-700 px-5 py-2.5 font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className={`rounded-xl px-6 py-3 font-semibold text-white shadow transition ${
+              completed
+                ? 'bg-emerald-600 hover:bg-emerald-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            } disabled:cursor-not-allowed disabled:opacity-70`}
           >
             {completed
-              ? 'Lesson completed'
+              ? '✓ Lesson Completed'
               : completing
-                ? 'Saving progress...'
-                : 'Mark as complete'}
+                ? 'Saving Progress...'
+                : 'Mark as Complete'}
           </button>
         </div>
       )}
 
+      {/* Instructor / Admin Action Controls */}
       {(user?.role === 'admin' || user?.role === 'instructor') && (
-        <div className="mt-8 flex gap-3">
+        <div className="flex gap-3 pt-4 border-t border-slate-200">
           <button
             onClick={() => {
               if (courseId) {
                 router.push(`/courses/${courseId}/lessons/${lesson.id}/edit`);
               }
             }}
-            className="rounded bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 transition"
           >
             Edit Lesson
           </button>
@@ -288,7 +309,7 @@ export default function LessonDetailPage({ params }: Props) {
                 router.push(`/courses/${courseId}`);
               }
             }}
-            className="rounded border px-5 py-2"
+            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
           >
             Course Details
           </button>

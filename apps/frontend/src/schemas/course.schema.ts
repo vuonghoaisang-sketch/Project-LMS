@@ -15,6 +15,8 @@ export const courseSchema = z.object({
 
   category: z.string().trim().min(1, 'Category is required').max(100),
 
+  thumbnail: z.string().max(2048, 'Thumbnail URL too long').nullable().optional(),
+
   price: z
     .number()
     .min(0, 'Price cannot be negative')

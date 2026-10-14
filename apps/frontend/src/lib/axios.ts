@@ -103,19 +103,19 @@ api.interceptors.response.use(
     }
 
     if (status === 403) {
-      console.error('Forbidden: You do not have permission.');
+      console.warn('Forbidden: You do not have permission.');
     }
 
     if (status === 404) {
-      console.error('Resource not found.');
+      console.warn('Resource not found.');
     }
 
     if (status === 409) {
-      console.error('Conflict:', error.response.data?.message);
+      console.warn('Conflict:', error.response.data?.message);
     }
 
     if (status >= 500) {
-      console.error('Server error.');
+      console.error('Server error:', error.response.data?.message || 'Internal error');
     }
 
     return Promise.reject(error);

@@ -29,13 +29,24 @@ export function validateLessonInput(data: unknown) {
   } else if (input.video_url.length > 2048) {
     errors.video_url = "Video URL must be 2048 characters or fewer";
   } else {
-    try {
-      const url = new URL(input.video_url);
-      if (url.protocol !== "https:" && url.protocol !== "http:") {
-        errors.video_url = "Video URL must use HTTP or HTTPS";
+    const trimmed = input.video_url.trim();
+    if (trimmed.startsWith("/uploads/")) {
+      // Valid local upload relative path
+    } else {
+      try {
+        const url = new URL(trimmed);
+        if (url.protocol !== "https:" && url.protocol !== "http:") {
+          errors.video_url = "Video URL must use HTTP or HTTPS";
+        }
+      } catch {
+        errors.video_url = "Video URL must be a valid URL";
       }
-    } catch {
-      errors.video_url = "Video URL must be a valid URL";
+    }
+  }
+
+  if (input.video_type !== undefined && input.video_type !== null) {
+    if (input.video_type !== "embed" && input.video_type !== "upload") {
+      errors.video_type = "Video type must be either 'embed' or 'upload'";
     }
   }
 

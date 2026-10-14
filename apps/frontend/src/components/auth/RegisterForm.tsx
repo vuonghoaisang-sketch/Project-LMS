@@ -45,7 +45,6 @@ export default function RegisterForm() {
         router.push('/login');
       }, 1500);
     } catch (err) {
-      console.error(err);
       setError(getErrorMessage(err));
     }
   }

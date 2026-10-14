@@ -6,6 +6,9 @@ import {
   getLessonService,
   updateLessonService,
   deleteLessonService,
+  addLessonAttachmentService,
+  deleteLessonAttachmentService,
+  getLessonAttachmentsService,
 } from "../services/lesson.service";
 
 import { validateLessonInput } from "../validators/lesson.validator";
@@ -35,6 +38,7 @@ export async function createLessonController(req: Request, res: Response) {
     course_id: courseId,
     title: req.body.title.trim(),
     description: req.body.description.trim(),
+    video_type: req.body.video_type === "upload" ? "upload" : "embed",
     video_url: req.body.video_url.trim(),
     position: Number(req.body.position),
   });
@@ -105,6 +109,7 @@ export async function updateLessonController(req: Request, res: Response) {
   await updateLessonService(id, {
     title: req.body.title.trim(),
     description: req.body.description.trim(),
+    video_type: req.body.video_type === "upload" ? "upload" : "embed",
     video_url: req.body.video_url.trim(),
     position: Number(req.body.position),
   });
@@ -130,5 +135,74 @@ export async function deleteLessonController(req: Request, res: Response) {
   return res.json({
     success: true,
     message: "Delete lesson successfully",
+  });
+}
+
+export async function addAttachmentController(req: Request, res: Response) {
+  const lessonId = Number(req.params.id);
+
+  if (!Number.isInteger(lessonId) || lessonId <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid lesson id",
+    });
+  }
+
+  const { name, file_url, file_size, file_type } = req.body;
+
+  if (!name || !file_url) {
+    return res.status(400).json({
+      success: false,
+      message: "Name and file_url are required",
+    });
+  }
+
+  const attachment = await addLessonAttachmentService(lessonId, {
+    name: String(name).trim(),
+    fileUrl: String(file_url).trim(),
+    fileSize: Number(file_size) || 0,
+    fileType: String(file_type || "application/octet-stream").trim(),
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: "Attachment added successfully",
+    attachment,
+  });
+}
+
+export async function deleteAttachmentController(req: Request, res: Response) {
+  const attachmentId = Number(req.params.attachmentId);
+
+  if (!Number.isInteger(attachmentId) || attachmentId <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid attachment id",
+    });
+  }
+
+  await deleteLessonAttachmentService(attachmentId);
+
+  return res.json({
+    success: true,
+    message: "Attachment deleted successfully",
+  });
+}
+
+export async function getAttachmentsController(req: Request, res: Response) {
+  const lessonId = Number(req.params.id);
+
+  if (!Number.isInteger(lessonId) || lessonId <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid lesson id",
+    });
+  }
+
+  const attachments = await getLessonAttachmentsService(lessonId);
+
+  return res.json({
+    success: true,
+    attachments,
   });
 }

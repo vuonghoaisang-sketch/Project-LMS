@@ -14,6 +14,7 @@ export async function createCourse(course: {
   title: string;
   description: string;
   category?: string;
+  thumbnail?: string | null;
   price: number;
   created_by: number;
 }) {
@@ -24,12 +25,20 @@ export async function createCourse(course: {
       title,
       description,
       category,
+      thumbnail,
       price,
       created_by
     )
-    VALUES (?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?)
     `,
-    [course.title, course.description, course.category ?? "General", course.price, course.created_by],
+    [
+      course.title,
+      course.description,
+      course.category ?? "General",
+      course.thumbnail ?? null,
+      course.price,
+      course.created_by,
+    ],
   );
 
   const insertId = (result as any).insertId;

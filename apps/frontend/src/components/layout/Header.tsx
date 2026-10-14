@@ -33,9 +33,22 @@ export default function Header() {
       <nav className="flex items-center gap-2 sm:gap-4" aria-label="Account">
         {user ? (
           <>
-            <span className="hidden max-w-48 truncate font-medium text-slate-700 sm:inline">
-              Hello, {user.name}
-            </span>
+            <div className="flex items-center gap-2">
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="h-8 w-8 rounded-full object-cover border border-slate-300 shadow-sm"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="hidden max-w-48 truncate font-medium text-slate-700 sm:inline">
+                {user.name}
+              </span>
+            </div>
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}

@@ -170,10 +170,17 @@ export default function CourseDetailPage({ params }: Props) {
       >
         {backText}
       </Link>
-      <div className="rounded-xl border bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-bold">{course.title}</h1>
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {course.thumbnail && (
+          <div
+            className="h-52 sm:h-72 w-full bg-slate-900 bg-cover bg-center"
+            style={{ backgroundImage: `url("${course.thumbnail}")` }}
+          />
+        )}
+        <div className="p-6 sm:p-8">
+          <h1 className="text-3xl font-bold text-slate-900">{course.title}</h1>
 
-        <p className="mt-4 leading-7 text-gray-600">{course.description}</p>
+          <p className="mt-4 leading-7 text-slate-600">{course.description}</p>
 
         <div className="mt-6 space-y-2">
           <p>
@@ -224,6 +231,7 @@ export default function CourseDetailPage({ params }: Props) {
             </button>
           </div>
         )}
+        </div>
       </div>
       {canManageCourse || enrolled ? (
         <LessonList courseId={course.id} canManage={canManageCourse} />

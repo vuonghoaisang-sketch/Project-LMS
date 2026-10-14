@@ -12,11 +12,24 @@ export const lessonSchema = z.object({
     .min(10, 'Description must be at least 10 characters')
     .max(10000, 'Description must be 10,000 characters or fewer'),
 
+  video_type: z.enum(['embed', 'upload']).default('embed'),
+
   video_url: z
     .string()
-    .min(1, 'Video URL is required')
+    .min(1, 'Video source is required')
     .max(2048, 'Video URL must be 2048 characters or fewer')
-    .url('Please enter a valid video URL'),
+    .refine(
+      (val) => {
+        if (val.startsWith('/uploads/')) return true;
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Please provide a valid video URL or upload a video file' },
+    ),
 
   position: z
     .number()

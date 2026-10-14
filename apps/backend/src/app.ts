@@ -10,6 +10,8 @@ import testRoute from "./routes/test.route";
 import lessonRoute from "./routes/lesson.route";
 import enrollmentRoute from "./routes/enrollment.route";
 import userRoute from "./routes/user.route";
+import uploadRoute from "./routes/upload.route";
+import { UPLOADS_DIR } from "./config/multer";
 
 import { notFoundHandler } from "./middlewares/not-found.middleware";
 import { errorHandler } from "./middlewares/error.middleware";
@@ -32,6 +34,9 @@ app.use(
 
 // Cookie Parser for HttpOnly cookie session handling
 app.use(cookieParser());
+
+// Static file serving for uploads with cross-origin access
+app.use("/uploads", express.static(UPLOADS_DIR));
 
 // CORS configuration supporting cookies
 app.use(
@@ -82,6 +87,7 @@ app.use("/api/auth/refresh", authRateLimiter);
 
 // Routes
 app.use("/api/auth", authRoute);
+app.use("/api/upload", uploadRoute);
 app.use("/api", testRoute);
 app.use("/api/courses", courseRoute);
 app.use("/api", lessonRoute);

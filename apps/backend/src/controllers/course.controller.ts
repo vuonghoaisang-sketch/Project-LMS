@@ -27,6 +27,7 @@ export async function createCourseController(req: Request, res: Response) {
     title: req.body.title.trim(),
     description: req.body.description.trim(),
     category: typeof req.body.category === "string" ? req.body.category.trim() : "General",
+    thumbnail: typeof req.body.thumbnail === "string" ? req.body.thumbnail.trim() : null,
     price: Number(req.body.price),
     created_by: user.id,
   });
@@ -89,6 +90,7 @@ export async function updateCourseController(req: Request, res: Response) {
     title: req.body.title.trim(),
     description: req.body.description.trim(),
     category: typeof req.body.category === "string" ? req.body.category.trim() : "General",
+    thumbnail: typeof req.body.thumbnail === "string" ? req.body.thumbnail.trim() : null,
     price: Number(req.body.price),
   });
 
