@@ -18,6 +18,7 @@ import Button from '@/components/ui/Button';
 export default function RegisterForm() {
   const router = useRouter();
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const {
     register,
@@ -29,6 +30,7 @@ export default function RegisterForm() {
 
   async function onSubmit(data: RegisterFormData) {
     setError('');
+    setSuccess('');
 
     try {
       await registerUser({
@@ -37,13 +39,14 @@ export default function RegisterForm() {
         password: data.password,
       });
 
-      alert('Register successfully');
+      setSuccess('Account created successfully! Redirecting to login...');
 
-      router.push('/login');
-    } catch (error) {
-      console.error(error);
-
-      setError(getErrorMessage(error));
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
     }
   }
 
@@ -55,6 +58,12 @@ export default function RegisterForm() {
         {error && (
           <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
+            {success}
           </div>
         )}
 

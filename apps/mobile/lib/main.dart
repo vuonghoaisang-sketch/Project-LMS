@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/home_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,12 +13,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Vancouver App',
+      title: 'Hồ sơ cá nhân',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const ProfileScreen(),
     );
   }
 }

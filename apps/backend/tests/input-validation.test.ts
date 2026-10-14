@@ -188,6 +188,7 @@ test("authentication middleware rejects missing and invalid bearer tokens", asyn
   for (const authorization of [undefined, "Bearer invalid-token"]) {
     const req = {
       headers: authorization ? { authorization } : {},
+      cookies: {},
     } as Request;
     const res = createResponse();
     let continued = false;
@@ -199,4 +200,33 @@ test("authentication middleware rejects missing and invalid bearer tokens", asyn
     assert.equal(continued, false);
     assert.equal(res.statusCode, 401);
   }
+});
+
+test("jwt utility generates and verifies access tokens correctly", () => {
+  const { generateAccessToken, verifyAccessToken } = require("../src/utils/jwt");
+
+  const payload = { id: 42, email: "test@example.com", role: "student" };
+  const token = generateAccessToken(payload);
+
+  assert.equal(typeof token, "string");
+  assert.ok(token.length > 0);
+
+  const decoded = verifyAccessToken(token);
+  assert.equal(decoded.id, payload.id);
+  assert.equal(decoded.email, payload.email);
+  assert.equal(decoded.role, payload.role);
+});
+
+test("jwt utility generates and verifies refresh tokens correctly", () => {
+  const { generateRefreshToken, verifyRefreshToken } = require("../src/utils/jwt");
+
+  const payload = { id: 7, email: "user@example.com", role: "instructor" };
+  const token = generateRefreshToken(payload);
+
+  assert.equal(typeof token, "string");
+  assert.ok(token.length > 0);
+
+  const decoded = verifyRefreshToken(token);
+  assert.equal(decoded.id, payload.id);
+  assert.equal(decoded.role, payload.role);
 });

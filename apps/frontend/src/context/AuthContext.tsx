@@ -14,8 +14,8 @@ import { User } from '@/types/user';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  loginUser: (user: User, token: string) => void;
-  logout: () => void;
+  loginUser: (user: User, token?: string) => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -26,28 +26,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    const handleUnauthorized = () => setUser(null);
+    const handleUnauthorized = () => {
+      setUser(null);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    };
+
     window.addEventListener('lms:unauthorized', handleUnauthorized);
 
     async function getCurrentUser() {
       try {
-        const token = localStorage.getItem('token');
-
-        if (!token) {
-          if (active) setLoading(false);
-          return;
-        }
-
         const res = await api.get('/auth/me');
-
         const currentUser = res.data.user;
 
         if (!active) return;
         setUser(currentUser);
         localStorage.setItem('user', JSON.stringify(currentUser));
-      } catch (error) {
-        console.error('Get current user failed:', error);
-
+      } catch {
         if (active) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -59,24 +54,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     getCurrentUser();
+
     return () => {
       active = false;
       window.removeEventListener('lms:unauthorized', handleUnauthorized);
     };
   }, []);
 
-  function loginUser(user: User, token: string) {
-    localStorage.setItem('token', token);
+  function loginUser(user: User, token?: string) {
+    if (token) {
+      localStorage.setItem('token', token);
+    }
     localStorage.setItem('user', JSON.stringify(user));
-
     setUser(user);
   }
 
-  function logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-
-    setUser(null);
+  async function logout() {
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+    }
   }
 
   return (

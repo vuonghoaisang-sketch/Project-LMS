@@ -1,200 +1,136 @@
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
+  void _showCallingMessage(BuildContext context) {
+    final messenger = ScaffoldMessenger.of(context);
 
-class _HomeScreenState extends State<HomeScreen> {
-  final PageController _pageController = PageController(viewportFraction: 0.82);
-
-  int _currentPage = 0;
-
-  final List<String> images = [
-    'https://picsum.photos/id/1015/600/350',
-    'https://picsum.photos/id/1016/600/350',
-    'https://picsum.photos/id/1018/600/350',
-    'https://picsum.photos/id/1019/600/350',
-    'https://picsum.photos/id/1020/600/350',
-  ];
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _previousPage() {
-    if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  void _nextPage() {
-    if (_currentPage < images.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Đang gọi cho bạn của bạn',
+          style: TextStyle(color: Colors.white, fontSize: 15),
+        ),
+        backgroundColor: Colors.black,
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 3),
+        margin: EdgeInsets.fromLTRB(16, 0, 16, 20),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Vancouver App'), centerTitle: true),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 15),
-
-            // IMAGE CAROUSEL
-            SizedBox(
-              height: 250,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  PageView.builder(
-                    controller: _pageController,
-                    itemCount: images.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentPage = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            images[index],
-                            width: double.infinity,
-                            height: 250,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  // NÚT TRÁI
-                  Positioned(
-                    left: 8,
-                    child: GestureDetector(
-                      onTap: _previousPage,
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.55),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.chevron_left,
-                          color: Colors.grey,
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // NÚT PHẢI
-                  Positioned(
-                    right: 8,
-                    child: GestureDetector(
-                      onTap: _nextPage,
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.60),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.chevron_right,
-                          color: Colors.grey,
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            // TIÊU ĐỀ
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Align(
-                alignment: Alignment.centerLeft,
+      backgroundColor: const Color(0xFFF5F7FA),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // TIÊU ĐỀ Ở GIỮA
+              const Center(
                 child: Text(
-                  'Nước Vancouver xinh đẹp - Vương Hoài Sang',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  'THÔNG TIN SINH VIÊN',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 30),
+              const SizedBox(height: 8),
 
-            // ACTIONS
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildAction(icon: Icons.phone, label: 'CALL'),
-                const SizedBox(width: 45),
-                _buildAction(icon: Icons.near_me, label: 'ROUTE'),
-                const SizedBox(width: 45),
-                _buildAction(icon: Icons.share, label: 'SHARE'),
-              ],
-            ),
-
-            const SizedBox(height: 30),
-
-            // DESCRIPTION
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Vancouver thực chất là một thành phố cảng biển lớn nằm ở phía tây tỉnh bang British Columbia, Canada'
-                'Được mệnh danh là một trong những thành phố đáng sống nhất thế giới.'
-                'Vancouver hớp hồn du khách bởi sự hòa quyện tuyệt mỹ giữa nhịp sống đô thị hiện đại và thiên nhiên hùng vĩ'
-                'con đường hiện đại. Thành phố mang đến sự kết hợp hài hòa '
-                'Nơi đây sở hữu địa thế "tựa sơn hướng hải" độc đáo, nơi những tòa nhà chọc trời bằng kính phản chiếu bãi biển xanh mát'
-                'và được bao bọc bởi những dãy núi quanh năm tuyết phủ.',
-                textAlign: TextAlign.justify,
-                style: TextStyle(fontSize: 16, height: 1.5),
+              const Center(
+                child: Text(
+                  'Danh sách thông tin liên hệ',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
               ),
-            ),
 
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
-    );
-  }
+              const SizedBox(height: 24),
 
-  static Widget _buildAction({required IconData icon, required String label}) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 38, color: Colors.blue),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
+              // THẺ SINH VIÊN
+              Card(
+                color: Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      // AVATAR
+                      const CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Color(0xFFE3EDFF),
+                        child: Icon(
+                          Icons.person,
+                          size: 36,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+
+                      const SizedBox(width: 14),
+
+                      // TÊN VÀ LỚP
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Nguyễn Văn An',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1F2937),
+                              ),
+                            ),
+                            SizedBox(height: 7),
+                            Text(
+                              'Lớp: CNTT K47',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      // NÚT GỌI ĐIỆN
+                      Builder(
+                        builder: (buttonContext) {
+                          return IconButton(
+                            tooltip: 'Bấm để gọi',
+                            onPressed: () {
+                              _showCallingMessage(buttonContext);
+                            },
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFF2563EB),
+                              foregroundColor: Colors.white,
+                              fixedSize: const Size(48, 48),
+                            ),
+                            icon: const Icon(Icons.phone, size: 23),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

@@ -9,10 +9,13 @@ export async function authMiddleware(
   res: Response,
   next: NextFunction,
 ) {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith("Bearer ")
-    ? authHeader.slice("Bearer ".length)
+  const authHeader = req.headers?.authorization;
+  const headerToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice("Bearer ".length).trim()
     : null;
+  const cookieToken = req.cookies?.accessToken as string | undefined;
+
+  const token = cookieToken || headerToken;
 
   if (!token) {
     return res.status(401).json({

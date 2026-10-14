@@ -2,16 +2,23 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { useAuth } from '@/context/AuthContext';
 
 export default function Header() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  function handleLogout() {
-    logout();
-    router.replace('/login');
+  async function handleLogout() {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      router.replace('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   }
 
   return (
@@ -31,9 +38,10 @@ export default function Header() {
             </span>
             <button
               onClick={handleLogout}
-              className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-700 sm:px-4"
+              disabled={isLoggingOut}
+              className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60 sm:px-4"
             >
-              Logout
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
             </button>
           </>
         ) : (

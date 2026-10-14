@@ -18,9 +18,7 @@ import Button from '@/components/ui/Button';
 
 export default function LoginForm() {
   const router = useRouter();
-
   const { loginUser } = useAuth();
-
   const [error, setError] = useState('');
 
   const {
@@ -37,12 +35,14 @@ export default function LoginForm() {
     try {
       const result = await login(data);
 
+      // Cookie is set automatically by backend via Set-Cookie header.
+      // Also store token in localStorage as fallback for mobile/API clients.
       loginUser(result.user, result.token);
 
       router.push('/');
-    } catch (error) {
-      console.error(error);
-      setError(getErrorMessage(error));
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
     }
   }
 
