@@ -5,3 +5,8 @@ export * from './upload.service';
 export * from './enrollment.service';
 export * from './learning-progress.service';
 export * from './user.service';
+export * from './quiz.service';
+export * from './comment.service';
+export * from './review.service';
+export * from './certificate.service';
+export * from './notification.service';

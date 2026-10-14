@@ -5,3 +5,8 @@ export * from './attachment';
 export * from './enrollment';
 export * from './learning-progress';
 export * from './user';
+export * from './quiz';
+export * from './comment';
+export * from './review';
+export * from './certificate';
+export * from './notification';

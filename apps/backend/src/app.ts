@@ -11,6 +11,14 @@ import lessonRoute from "./routes/lesson.route";
 import enrollmentRoute from "./routes/enrollment.route";
 import userRoute from "./routes/user.route";
 import uploadRoute from "./routes/upload.route";
+import quizRoute from "./routes/quiz.route";
+import commentRoute from "./routes/comment.route";
+import reviewRoute from "./routes/review.route";
+import certificateRoute from "./routes/certificate.route";
+import notificationRoute from "./routes/notification.route";
+import orderRoute from "./routes/order.route";
+import couponRoute from "./routes/coupon.route";
+import checkoutRoute from "./routes/checkout.route";
 import { UPLOADS_DIR } from "./config/multer";
 
 import { notFoundHandler } from "./middlewares/not-found.middleware";
@@ -93,6 +101,14 @@ app.use("/api/courses", courseRoute);
 app.use("/api", lessonRoute);
 app.use("/api/enrollments", enrollmentRoute);
 app.use("/api/users", userRoute);
+app.use("/api", quizRoute);
+app.use("/api", commentRoute);
+app.use("/api", reviewRoute);
+app.use("/api", certificateRoute);
+app.use("/api/notifications", notificationRoute);
+app.use("/api/orders", orderRoute);
+app.use("/api/coupons", couponRoute);
+app.use("/api/checkout", checkoutRoute);
 
 // Error handlers
 app.use(notFoundHandler);

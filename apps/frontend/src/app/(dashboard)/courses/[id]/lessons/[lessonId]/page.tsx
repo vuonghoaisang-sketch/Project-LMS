@@ -9,14 +9,19 @@ import {
   completeLesson,
   getCourseProgress,
 } from '@/services/learning-progress.service';
+import { getLessonQuiz, getQuizForStudent, getQuizForInstructor } from '@/services/quiz.service';
 
 import { Lesson } from '@/types/lesson';
+import { Quiz } from '@/types/quiz';
 import { useAuth } from '@/context/AuthContext';
 
 import Loading from '@/components/ui/Loading';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorState from '@/components/ui/ErrorState';
 import VideoPlayer from '@/components/lesson/VideoPlayer';
+import QuizPlayer from '@/components/quiz/QuizPlayer';
+import QuizBuilder from '@/components/quiz/QuizBuilder';
+import LessonComments from '@/components/lesson/LessonComments';
 import { getErrorMessage } from '@/utils/error';
 
 interface Props {
@@ -32,6 +37,8 @@ export default function LessonDetailPage({ params }: Props) {
   const { user, loading: authLoading } = useAuth();
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [showQuizBuilder, setShowQuizBuilder] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
@@ -79,8 +86,23 @@ export default function LessonDetailPage({ params }: Props) {
         }
 
         const data = await getLessonById(lessonIdNumber);
-
         setLesson(data);
+
+        // Load Quiz
+        try {
+          const quizBasic = await getLessonQuiz(lessonIdNumber);
+          if (quizBasic) {
+            const quizFull =
+              user?.role === 'admin' || user?.role === 'instructor'
+                ? await getQuizForInstructor(quizBasic.id)
+                : await getQuizForStudent(quizBasic.id);
+            setQuiz(quizFull);
+          } else {
+            setQuiz(null);
+          }
+        } catch {
+          // ignore quiz load failure
+        }
 
         if (user?.role === 'student') {
           const progress = await getCourseProgress(courseIdNumber);
@@ -96,11 +118,7 @@ export default function LessonDetailPage({ params }: Props) {
     loadLesson();
   }, [params, user, authLoading]);
 
-  if (authLoading) {
-    return <Loading />;
-  }
-
-  if (loading) {
+  if (authLoading || loading) {
     return <Loading />;
   }
 
@@ -177,18 +195,36 @@ export default function LessonDetailPage({ params }: Props) {
     }
   }
 
+  const isInstructorOrAdmin =
+    user?.role === 'admin' || user?.role === 'instructor';
+
   return (
-    <div className="max-w-5xl space-y-6">
-      <button
-        onClick={() => {
-          if (courseId) {
-            router.push(`/courses/${courseId}`);
-          }
-        }}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-sm"
-      >
-        ← Back to Course
-      </button>
+    <div className="max-w-5xl space-y-8">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => {
+            if (courseId) {
+              router.push(`/courses/${courseId}`);
+            }
+          }}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-sm"
+        >
+          ← Back to Course
+        </button>
+
+        {isInstructorOrAdmin && (
+          <button
+            onClick={() => setShowQuizBuilder(!showQuizBuilder)}
+            className="rounded-lg bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition border border-indigo-200"
+          >
+            {showQuizBuilder
+              ? 'Close Quiz Builder'
+              : quiz
+                ? '⚙ Manage Lesson Quiz'
+                : '+ Add Lesson Quiz'}
+          </button>
+        )}
+      </div>
 
       <div>
         <span className="inline-block rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
@@ -210,7 +246,7 @@ export default function LessonDetailPage({ params }: Props) {
         </p>
       </div>
 
-      {/* Attachments Section */}
+      {/* Downloadable Attachments Section */}
       {lesson.attachments && lesson.attachments.length > 0 && (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
@@ -267,7 +303,30 @@ export default function LessonDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Completion Button for Student */}
+      {/* Instructor Quiz Builder */}
+      {showQuizBuilder && (
+        <QuizBuilder
+          lessonId={lesson.id}
+          initialQuiz={quiz}
+          onSaved={(saved) => {
+            setQuiz(saved);
+            setShowQuizBuilder(false);
+          }}
+          onCancel={() => setShowQuizBuilder(false)}
+        />
+      )}
+
+      {/* Student Quiz Module */}
+      {quiz && !showQuizBuilder && (
+        <QuizPlayer
+          quiz={quiz}
+          onPassed={() => {
+            // Callback when student passes quiz
+          }}
+        />
+      )}
+
+      {/* Student Lesson Completion Button */}
       {user?.role === 'student' && (
         <div className="pt-2">
           <button
@@ -289,8 +348,11 @@ export default function LessonDetailPage({ params }: Props) {
         </div>
       )}
 
+      {/* Q&A Threaded Discussion */}
+      <LessonComments lessonId={lesson.id} />
+
       {/* Instructor / Admin Action Controls */}
-      {(user?.role === 'admin' || user?.role === 'instructor') && (
+      {isInstructorOrAdmin && (
         <div className="flex gap-3 pt-4 border-t border-slate-200">
           <button
             onClick={() => {

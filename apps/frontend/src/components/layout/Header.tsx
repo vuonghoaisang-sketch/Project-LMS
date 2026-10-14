@@ -6,6 +6,8 @@ import { useState } from 'react';
 
 import { useAuth } from '@/context/AuthContext';
 
+import NotificationBell from './NotificationBell';
+
 export default function Header() {
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -31,6 +33,7 @@ export default function Header() {
       </Link>
 
       <nav className="flex items-center gap-2 sm:gap-4" aria-label="Account">
+        <NotificationBell />
         {user ? (
           <>
             <div className="flex items-center gap-2">
