@@ -10,3 +10,6 @@ export * from './comment.service';
 export * from './review.service';
 export * from './certificate.service';
 export * from './notification.service';
+export * from './order.service';
+export * from './coupon.service';
+export * from './checkout.service';

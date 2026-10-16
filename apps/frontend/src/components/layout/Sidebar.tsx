@@ -20,6 +20,11 @@ export default function Sidebar() {
       visible: user?.role === 'student',
     },
     {
+      href: '/orders',
+      label: 'My Orders',
+      visible: user?.role === 'student',
+    },
+    {
       href: '/create-course',
       label: 'Create Course',
       visible: user?.role === 'admin' || user?.role === 'instructor',

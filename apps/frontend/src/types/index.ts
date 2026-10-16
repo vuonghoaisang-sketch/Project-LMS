@@ -10,3 +10,4 @@ export * from './comment';
 export * from './review';
 export * from './certificate';
 export * from './notification';
+export * from './order';

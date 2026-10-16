@@ -7,11 +7,20 @@ import {
 
 import AppError from "../utils/AppError";
 import { findCourseById } from "../models/course.model";
+
 export async function enrollUser(userId: number, courseId: number) {
   const course = await findCourseById(courseId);
 
   if (!course) {
     throw new AppError("Course not found", 404);
+  }
+
+  // Khoá học có giá phải đi qua luồng đơn hàng + thanh toán
+  if (Number(course.price) > 0) {
+    throw new AppError(
+      "This course requires payment. Please purchase it first.",
+      400,
+    );
   }
 
   const existingEnrollment = await findEnrollment(userId, courseId);

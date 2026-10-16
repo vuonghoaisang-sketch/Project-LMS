@@ -1,5 +1,5 @@
-import db from '../config/database';
-import { Order, OrderItem, OrderStatus } from '../types/order.types';
+import db from "../config/database";
+import { Order, OrderStatus } from "../types/order.types";
 
 export async function findOrderById(id: number): Promise<Order | null> {
   const [rows] = await db.execute(
@@ -9,7 +9,7 @@ export async function findOrderById(id: number): Promise<Order | null> {
      LEFT JOIN coupons c ON o.coupon_id = c.id
      WHERE o.id = ?
      LIMIT 1`,
-    [id]
+    [id],
   );
   const row = (rows as any[])[0];
   if (!row) return null;
@@ -19,7 +19,7 @@ export async function findOrderById(id: number): Promise<Order | null> {
      FROM order_items oi
      JOIN courses co ON oi.course_id = co.id
      WHERE oi.order_id = ?`,
-    [id]
+    [id],
   );
 
   return {
@@ -34,10 +34,12 @@ export async function findOrderById(id: number): Promise<Order | null> {
   };
 }
 
-export async function findOrderByCode(orderCode: string): Promise<Order | null> {
+export async function findOrderByCode(
+  orderCode: string,
+): Promise<Order | null> {
   const [rows] = await db.execute(
     `SELECT id FROM orders WHERE order_code = ? LIMIT 1`,
-    [orderCode]
+    [orderCode],
   );
   const row = (rows as any[])[0];
   if (!row) return null;
@@ -65,7 +67,7 @@ export async function createOrder(data: {
       data.coupon_id ?? null,
       data.total_amount,
       data.status,
-    ]
+    ],
   );
 
   const orderId = (result as any).insertId;
@@ -73,7 +75,7 @@ export async function createOrder(data: {
   for (const item of data.items) {
     await db.execute(
       `INSERT INTO order_items (order_id, course_id, price) VALUES (?, ?, ?)`,
-      [orderId, item.course_id, item.price]
+      [orderId, item.course_id, item.price],
     );
   }
 
@@ -86,8 +88,8 @@ export async function getUserOrders(userId: number): Promise<Order[]> {
      FROM orders o
      LEFT JOIN coupons c ON o.coupon_id = c.id
      WHERE o.user_id = ?
-     ORDER BY o.created_at DESC`,
-    [userId]
+     ORDER BY o.created_at DESC, o.id DESC`,
+    [userId],
   );
 
   const orders: Order[] = [];
@@ -97,7 +99,7 @@ export async function getUserOrders(userId: number): Promise<Order[]> {
        FROM order_items oi
        JOIN courses co ON oi.course_id = co.id
        WHERE oi.order_id = ?`,
-      [row.id]
+      [row.id],
     );
 
     orders.push({
@@ -115,6 +117,23 @@ export async function getUserOrders(userId: number): Promise<Order[]> {
   return orders;
 }
 
-export async function updateOrderStatus(id: number, status: OrderStatus): Promise<void> {
-  await db.execute('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+export async function updateOrderStatus(
+  id: number,
+  status: OrderStatus,
+): Promise<void> {
+  await db.execute("UPDATE orders SET status = ? WHERE id = ?", [status, id]);
+}
+
+// Hủy các đơn 'pending' cũ của cùng 1 user + 1 khoá học (tránh đơn rác khi bấm Mua nhiều lần)
+export async function cancelPendingOrdersForCourse(
+  userId: number,
+  courseId: number,
+): Promise<void> {
+  await db.execute(
+    `UPDATE orders o
+     JOIN order_items oi ON oi.order_id = o.id
+     SET o.status = 'cancelled'
+     WHERE o.user_id = ? AND oi.course_id = ? AND o.status = 'pending'`,
+    [userId, courseId],
+  );
 }
